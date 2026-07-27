@@ -1,0 +1,641 @@
+﻿"use client";
+
+import { useState, useRef, useCallback } from "react";
+import { useRouter } from "next/navigation";
+import type { Invitation, EventType, ThemeStyle, SectionKey } from "@/types/invitation";
+
+type DraftInvitation = Omit<Invitation, "id" | "slug" | "ownerId" | "createdAt" | "updatedAt"> & {
+  id?: string;
+  slug?: string;
+};
+
+const ALL_SECTIONS: SectionKey[] = [
+  "hero", "details", "countdown", "gallery", "message", "dressCode", "map", "rsvp", "music",
+];
+
+const SECTION_LABELS: Record<SectionKey, string> = {
+  hero: "Portada principal",
+  details: "Fecha, hora y lugar",
+  countdown: "Cuenta regresiva",
+  gallery: "Galeria de fotos",
+  message: "Mensaje personalizado",
+  dressCode: "Dress code",
+  map: "Mapa / direccion",
+  rsvp: "Formulario RSVP",
+  music: "Musica de fondo",
+};
+
+const THEMES: Record<ThemeStyle, { label: string; bg: string; text: string; accent: string; card: string }> = {
+  elegant: { label: "Elegante", bg: "#12192b", text: "#f0e6c8", accent: "#c9a84c", card: "#1e2d47" },
+  romantic: { label: "Romantico", bg: "#fff0f3", text: "#5c2d45", accent: "#d4608a", card: "#ffe8ee" },
+  modern: { label: "Moderno", bg: "#ffffff", text: "#111111", accent: "#1a1a1a", card: "#f5f5f5" },
+  floral: { label: "Floral", bg: "#f8f4ef", text: "#3d3325", accent: "#7b9e6b", card: "#eee5d6" },
+};
+
+const EVENT_LABELS: Record<EventType, string> = {
+  boda: "Boda",
+  cumpleanos: "Cumpleanos",
+  "baby-shower": "Baby Shower",
+  graduacion: "Graduacion",
+  otro: "Otro evento",
+};
+
+const DEFAULT_GALLERY = [
+  "https://images.unsplash.com/photo-1516589091380-5d8e87df6999?auto=format&fit=crop&w=1200&q=80",
+  "https://images.unsplash.com/photo-1511285560929-80b456fea0bc?auto=format&fit=crop&w=1200&q=80",
+  "https://images.unsplash.com/photo-1520854221256-17451cc331bf?auto=format&fit=crop&w=1200&q=80",
+  "https://images.unsplash.com/photo-1464692805480-a69dfaafdb0d?auto=format&fit=crop&w=1200&q=80",
+  "https://images.unsplash.com/photo-1519741497674-611481863552?auto=format&fit=crop&w=1200&q=80",
+  "https://images.unsplash.com/photo-1460978812857-470ed1c77af0?auto=format&fit=crop&w=1200&q=80",
+];
+
+function getDefaultDraft(): DraftInvitation {
+  return {
+    id: undefined,
+    slug: undefined,
+    eventType: "boda",
+    title: "Ana & Carlos",
+    subtitle: "Nos encantaria celebrar contigo este dia tan especial",
+    heroImage: "https://images.unsplash.com/photo-1523438885200-e635ba2c371e?auto=format&fit=crop&w=1800&q=80",
+    hostNames: "Familias Garcia y Lopez",
+    dateTime: "2026-12-19T18:00",
+    place: "Hacienda Villa Jardin",
+    address: "Av. Primavera 1234, Lima",
+    mapUrl: "https://www.google.com/maps?q=Lima+Peru&output=embed",
+    message: "Gracias por acompanarnos en el inicio de esta nueva etapa. Tu presencia hara este momento aun mas inolvidable.",
+    gallery: DEFAULT_GALLERY,
+    dressCode: "Formal elegante",
+    musicUrl: "",
+    theme: "romantic",
+    primaryColor: "#d4608a",
+    textColor: "",
+    sections: [...ALL_SECTIONS],
+  };
+}
+
+function formatDate(iso: string) {
+  if (!iso) return "";
+  try {
+    const date = new Date(iso);
+    const weekdays = ["domingo", "lunes", "martes", "miércoles", "jueves", "viernes", "sábado"];
+    const months = [
+      "enero", "febrero", "marzo", "abril", "mayo", "junio",
+      "julio", "agosto", "septiembre", "octubre", "noviembre", "diciembre",
+    ];
+
+    const weekday = weekdays[date.getDay()];
+    const day = date.getDate();
+    const month = months[date.getMonth()];
+    const year = date.getFullYear();
+    const hours = date.getHours().toString().padStart(2, "0");
+    const minutes = date.getMinutes().toString().padStart(2, "0");
+
+    return `${weekday}, ${day} de ${month} de ${year}, ${hours}:${minutes}`;
+  } catch {
+    return iso;
+  }
+}
+
+// ----- Preview ----------------------------------------------------------------
+function PagePreview({ draft }: { draft: DraftInvitation }) {
+  const theme = THEMES[draft.theme] ?? THEMES.elegant;
+  const accent = draft.primaryColor || theme.accent;
+  const activeGallery = (draft.gallery ?? []).filter(Boolean);
+  const sections = draft.sections.length ? draft.sections : ALL_SECTIONS;
+
+  const style = {
+    "--th-bg": theme.bg,
+    "--th-text": draft.textColor || theme.text,
+    "--th-accent": accent,
+    "--th-card": theme.card,
+  } as React.CSSProperties;
+
+  return (
+    <div
+      className="w-full rounded-2xl overflow-hidden shadow-2xl"
+      style={{ ...style, background: "var(--th-bg)", color: "var(--th-text)", fontFamily: "Georgia, serif" }}
+    >
+      {sections.map((key) => {
+        switch (key) {
+          case "hero":
+            return (
+              <section
+                key="hero"
+                className="relative flex flex-col items-center justify-center py-20 px-6 text-center min-h-[220px]"
+                style={{
+                  background: draft.heroImage
+                    ? `linear-gradient(rgba(0,0,0,0.45),rgba(0,0,0,0.55)),url(${draft.heroImage}) center/cover no-repeat`
+                    : `linear-gradient(135deg,var(--th-card),var(--th-bg))`,
+                  color: draft.heroImage ? "#fff" : "var(--th-text)",
+                }}
+              >
+                <p className="text-xs uppercase tracking-widest mb-2 opacity-70">{EVENT_LABELS[draft.eventType]}</p>
+                <h1 className="text-3xl font-bold mb-2">{draft.title || "Titulo del evento"}</h1>
+                {draft.subtitle && <p className="text-base opacity-80 max-w-xs">{draft.subtitle}</p>}
+              </section>
+            );
+
+          case "details":
+            if (!draft.hostNames && !draft.dateTime && !draft.place) return null;
+            return (
+              <section key="details" className="py-8 px-6 text-center" style={{ background: "var(--th-card)" }}>
+                {draft.hostNames && <p className="text-lg font-semibold mb-3">{draft.hostNames}</p>}
+                <div className="flex flex-wrap justify-center gap-6 text-sm">
+                  {draft.dateTime && (
+                    <div>
+                      <p className="uppercase tracking-wider text-xs opacity-60 mb-1">Fecha y hora</p>
+                      <p>{formatDate(draft.dateTime)}</p>
+                    </div>
+                  )}
+                  {draft.place && (
+                    <div>
+                      <p className="uppercase tracking-wider text-xs opacity-60 mb-1">Lugar</p>
+                      <p>{draft.place}</p>
+                      {draft.address && <p className="opacity-60 text-xs">{draft.address}</p>}
+                    </div>
+                  )}
+                </div>
+              </section>
+            );
+
+          case "countdown":
+            return (
+              <section key="countdown" className="py-8 px-6 text-center">
+                <p className="text-xs uppercase tracking-widest opacity-60 mb-4">Cuenta regresiva</p>
+                <div className="flex justify-center gap-4">
+                  {["dias", "horas", "min", "seg"].map((u) => (
+                    <div key={u} className="text-center">
+                      <div className="text-2xl font-bold rounded-lg px-3 py-2" style={{ background: "var(--th-card)" }}>
+                        --
+                      </div>
+                      <p className="text-xs opacity-60 mt-1">{u}</p>
+                    </div>
+                  ))}
+                </div>
+              </section>
+            );
+
+          case "gallery":
+            if (!activeGallery.length) return null;
+            return (
+              <section key="gallery" className="py-8 px-4">
+                <p className="text-xs uppercase tracking-widest opacity-60 text-center mb-4">Galeria</p>
+                <div className="grid grid-cols-3 gap-2">
+                  {activeGallery.slice(0, 9).map((src, i) => (
+                    <div key={i} className="aspect-square rounded-lg overflow-hidden" style={{ background: "var(--th-card)" }}>
+                      {/* eslint-disable-next-line @next/next/no-img-element */}
+                      <img src={src} alt="" className="w-full h-full object-cover" />
+                    </div>
+                  ))}
+                </div>
+              </section>
+            );
+
+          case "message":
+            if (!draft.message) return null;
+            return (
+              <section key="message" className="py-10 px-8 text-center">
+                <p className="italic text-base leading-relaxed opacity-90 max-w-md mx-auto">
+                  &ldquo;{draft.message}&rdquo;
+                </p>
+              </section>
+            );
+
+          case "dressCode":
+            if (!draft.dressCode) return null;
+            return (
+              <section key="dressCode" className="py-6 px-6 text-center" style={{ background: "var(--th-card)" }}>
+                <p className="text-xs uppercase tracking-widest opacity-60 mb-1">Dress Code</p>
+                <p className="text-base font-semibold">{draft.dressCode}</p>
+              </section>
+            );
+
+          case "map":
+            if (!draft.mapUrl) return null;
+            return (
+              <section key="map" className="py-6 px-6">
+                <p className="text-xs uppercase tracking-widest opacity-60 text-center mb-3">Ubicacion</p>
+                <div className="rounded-xl overflow-hidden w-full" style={{ height: 150, background: "var(--th-card)" }}>
+                  <iframe src={draft.mapUrl} className="w-full h-full border-0" title="Mapa" />
+                </div>
+              </section>
+            );
+
+          case "rsvp":
+            return (
+              <section key="rsvp" className="py-8 px-6 text-center" style={{ background: "var(--th-card)" }}>
+                <p className="text-xs uppercase tracking-widest opacity-60 mb-4">Confirma tu asistencia</p>
+                <div className="max-w-xs mx-auto space-y-2">
+                  <div className="h-8 rounded-lg opacity-30" style={{ background: "var(--th-bg)" }} />
+                  <div className="h-8 rounded-lg opacity-30" style={{ background: "var(--th-bg)" }} />
+                  <div className="h-9 rounded-lg" style={{ background: accent }} />
+                </div>
+              </section>
+            );
+
+          case "music":
+            if (!draft.musicUrl) return null;
+            return (
+              <section key="music" className="py-4 px-6 text-center text-xs opacity-60">
+                ♫ Musica de fondo activa
+              </section>
+            );
+
+          default:
+            return null;
+        }
+      })}
+
+      {/* Mockup de seccion de comentarios */}
+      <section className="py-8 px-4" style={{ background: "var(--th-card)" }}>
+        <p className="text-xs uppercase tracking-widest opacity-60 text-center mb-4">Comentarios</p>
+        <div className="space-y-2 max-w-sm mx-auto">
+          <div className="flex items-center gap-2 rounded-2xl border border-white/20 bg-white/10 px-3 py-2">
+            <div className="h-7 w-7 flex-shrink-0 rounded-full bg-white/30" />
+            <div className="h-4 flex-1 rounded-full bg-white/20" />
+          </div>
+          <div className="flex items-start gap-2">
+            <div className="h-7 w-7 flex-shrink-0 rounded-full bg-white/20" />
+            <div className="space-y-1.5 flex-1">
+              <div className="h-3 w-24 rounded bg-white/30" />
+              <div className="h-3 w-full rounded bg-white/20" />
+              <div className="h-3 w-3/4 rounded bg-white/20" />
+            </div>
+          </div>
+        </div>
+      </section>
+    </div>
+  );
+}
+
+// ----- Section accordion ------------------------------------------------------
+function SectionPanel({
+  sectionKey,
+  enabled,
+  onToggle,
+  children,
+}: {
+  sectionKey: SectionKey;
+  enabled: boolean;
+  onToggle: () => void;
+  children: React.ReactNode;
+}) {
+  const [open, setOpen] = useState(false);
+
+  return (
+    <div className="rounded-xl border border-gray-200 bg-white overflow-hidden">
+      <div
+        className="flex items-center justify-between px-4 py-3 cursor-pointer hover:bg-gray-50 select-none"
+        onClick={() => setOpen((o) => !o)}
+      >
+        <div className="flex items-center gap-3">
+          <button
+            type="button"
+            onClick={(e) => { e.stopPropagation(); onToggle(); }}
+            className={`w-10 h-5 rounded-full transition-colors relative flex-shrink-0 ${enabled ? "bg-indigo-500" : "bg-gray-300"}`}
+          >
+            <span
+              className={`absolute top-0.5 w-4 h-4 rounded-full bg-white shadow transition-transform ${enabled ? "translate-x-5" : "translate-x-0.5"}`}
+            />
+          </button>
+          <span className="text-sm font-medium">{SECTION_LABELS[sectionKey]}</span>
+        </div>
+        <span className="text-gray-400 text-xs">{open ? "▲" : "▼"}</span>
+      </div>
+      {open && enabled && (
+        <div className="px-4 pb-4 space-y-3 border-t border-gray-100 pt-3 bg-gray-50">
+          {children}
+        </div>
+      )}
+    </div>
+  );
+}
+
+// ----- Field helpers ----------------------------------------------------------
+function Field({ label, children }: { label: string; children: React.ReactNode }) {
+  return (
+    <div>
+      <label className="block text-xs text-gray-500 mb-1">{label}</label>
+      {children}
+    </div>
+  );
+}
+
+const inputCls = "w-full rounded-lg border border-gray-200 px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-indigo-300";
+
+// ----- Main editor ------------------------------------------------------------
+export default function InvitationEditor({ initial }: { initial?: Invitation }) {
+  const router = useRouter();
+  const [saving, setSaving] = useState(false);
+  const [galleryInputUrl, setGalleryInputUrl] = useState("");
+  const heroFileRef = useRef<HTMLInputElement>(null);
+  const galleryFileRef = useRef<HTMLInputElement>(null);
+
+  const [draft, setDraft] = useState<DraftInvitation>(() => {
+    if (!initial) {
+      return getDefaultDraft();
+    }
+
+    return {
+      id: initial.id,
+      slug: initial.slug,
+      eventType: initial.eventType ?? "boda",
+      title: initial.title ?? "",
+      subtitle: initial.subtitle ?? "",
+      heroImage: initial.heroImage ?? "",
+      hostNames: initial.hostNames ?? "",
+      dateTime: initial.dateTime ?? "",
+      place: initial.place ?? "",
+      address: initial.address ?? "",
+      mapUrl: initial.mapUrl ?? "",
+      message: initial.message ?? "",
+      gallery: initial.gallery ?? [],
+      dressCode: initial.dressCode ?? "",
+      musicUrl: initial.musicUrl ?? "",
+      theme: initial.theme ?? "elegant",
+      primaryColor: initial.primaryColor ?? "",
+      textColor: initial.textColor ?? "",
+      sections: initial.sections ?? [...ALL_SECTIONS],
+    };
+  });
+
+  const set = useCallback(<K extends keyof DraftInvitation>(key: K, value: DraftInvitation[K]) => {
+    setDraft((d) => ({ ...d, [key]: value }));
+  }, []);
+
+  const toggleSection = useCallback((key: SectionKey) => {
+    setDraft((d) => ({
+      ...d,
+      sections: d.sections.includes(key)
+        ? d.sections.filter((s) => s !== key)
+        : [...d.sections, key],
+    }));
+  }, []);
+
+  const addGalleryUrl = () => {
+    const url = galleryInputUrl.trim();
+    if (!url) return;
+    setDraft((d) => ({ ...d, gallery: [...(d.gallery ?? []), url] }));
+    setGalleryInputUrl("");
+  };
+
+  const addGalleryFiles = (e: React.ChangeEvent<HTMLInputElement>) => {
+    Array.from(e.target.files ?? []).forEach((file) => {
+      const reader = new FileReader();
+      reader.onload = (ev) => {
+        setDraft((d) => ({ ...d, gallery: [...(d.gallery ?? []), ev.target?.result as string] }));
+      };
+      reader.readAsDataURL(file);
+    });
+    e.target.value = "";
+  };
+
+  const removeGalleryItem = (idx: number) => {
+    setDraft((d) => ({ ...d, gallery: (d.gallery ?? []).filter((_, i) => i !== idx) }));
+  };
+
+  const addHeroFile = (e: React.ChangeEvent<HTMLInputElement>) => {
+    const file = e.target.files?.[0];
+    if (!file) return;
+    const reader = new FileReader();
+    reader.onload = (ev) => set("heroImage", ev.target?.result as string);
+    reader.readAsDataURL(file);
+    e.target.value = "";
+  };
+
+  const handleSave = async () => {
+    setSaving(true);
+    try {
+      const res = await fetch("/api/invitations", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify(draft),
+      });
+      if (!res.ok) throw new Error(await res.text());
+      const data = await res.json();
+      const saved: Invitation = data.invitation ?? data;
+      if (!draft.id) {
+        router.replace(`/editor?id=${saved.id}`);
+        setDraft((d) => ({ ...d, id: saved.id, slug: saved.slug }));
+      }
+      alert("Guardado correctamente");
+    } catch (err) {
+      alert("Error al guardar: " + String(err));
+    } finally {
+      setSaving(false);
+    }
+  };
+
+  const publicUrl = draft.slug ? `/i/${draft.slug}` : null;
+
+  return (
+    <div className="grid md:grid-cols-[420px_1fr] gap-4" style={{ height: "calc(100vh - 130px)" }}>
+      {/* Left: controls */}
+      <aside className="overflow-y-auto rounded-2xl border border-gray-200 bg-gray-50 p-4 space-y-3">
+        {/* Theme */}
+        <div className="rounded-xl border border-gray-200 bg-white p-4 space-y-3">
+          <h2 className="text-xs font-semibold uppercase tracking-wider text-gray-500">Tema visual</h2>
+          <div className="grid grid-cols-2 gap-2">
+            {(Object.keys(THEMES) as ThemeStyle[]).map((t) => (
+              <button
+                key={t}
+                type="button"
+                onClick={() => set("theme", t)}
+                className={`rounded-lg px-3 py-2 text-xs font-medium border transition-all ${
+                  draft.theme === t
+                    ? "ring-2 ring-indigo-400 border-indigo-500"
+                    : "border-gray-200 hover:border-indigo-300"
+                }`}
+                style={{ background: THEMES[t].bg, color: THEMES[t].text }}
+              >
+                {THEMES[t].label}
+              </button>
+            ))}
+          </div>
+          <Field label="Color de acento">
+            <input
+              type="color"
+              value={draft.primaryColor || THEMES[draft.theme]?.accent || "#c9a84c"}
+              onChange={(e) => set("primaryColor", e.target.value)}
+              className="w-10 h-8 rounded cursor-pointer border"
+            />
+          </Field>
+          <Field label="Color de texto">
+            <div className="flex items-center gap-2">
+              <input
+                type="color"
+                value={draft.textColor || THEMES[draft.theme]?.text || "#000000"}
+                onChange={(e) => set("textColor", e.target.value)}
+                className="w-10 h-8 rounded cursor-pointer border"
+              />
+              {draft.textColor ? (
+                <button
+                  type="button"
+                  onClick={() => set("textColor", "")}
+                  className="text-xs text-gray-400 hover:text-gray-600"
+                >
+                  Restablecer
+                </button>
+              ) : (
+                <span className="text-xs text-gray-400">Usa el color del tema</span>
+              )}
+            </div>
+          </Field>
+        </div>
+
+        {/* Tipo de evento */}
+        <div className="rounded-xl border border-gray-200 bg-white p-4">
+          <Field label="Tipo de evento">
+            <select
+              value={draft.eventType}
+              onChange={(e) => set("eventType", e.target.value as EventType)}
+              className={inputCls}
+            >
+              {(Object.keys(EVENT_LABELS) as EventType[]).map((k) => (
+                <option key={k} value={k}>{EVENT_LABELS[k]}</option>
+              ))}
+            </select>
+          </Field>
+        </div>
+
+        {/* Sections */}
+        {ALL_SECTIONS.map((key) => (
+          <SectionPanel
+            key={key}
+            sectionKey={key}
+            enabled={draft.sections.includes(key)}
+            onToggle={() => toggleSection(key)}
+          >
+            {key === "hero" && (
+              <>
+                <Field label="Titulo principal *">
+                  <input className={inputCls} value={draft.title} onChange={(e) => set("title", e.target.value)} placeholder="Ej: La boda de Ana y Carlos" />
+                </Field>
+                <Field label="Subtitulo">
+                  <input className={inputCls} value={draft.subtitle ?? ""} onChange={(e) => set("subtitle", e.target.value)} placeholder="Un mensaje de bienvenida" />
+                </Field>
+                <Field label="Imagen de fondo (URL)">
+                  <input className={inputCls} value={draft.heroImage ?? ""} onChange={(e) => set("heroImage", e.target.value)} placeholder="https://..." />
+                </Field>
+                <Field label="o subir imagen desde tu dispositivo">
+                  <input type="file" accept="image/*" ref={heroFileRef} onChange={addHeroFile} className="text-xs w-full" />
+                </Field>
+              </>
+            )}
+            {key === "details" && (
+              <>
+                <Field label="Anfitriones">
+                  <input className={inputCls} value={draft.hostNames ?? ""} onChange={(e) => set("hostNames", e.target.value)} placeholder="Ana Garcia & Carlos Lopez" />
+                </Field>
+                <Field label="Fecha y hora">
+                  <input type="datetime-local" className={inputCls} value={draft.dateTime ?? ""} onChange={(e) => set("dateTime", e.target.value)} />
+                </Field>
+                <Field label="Nombre del lugar">
+                  <input className={inputCls} value={draft.place ?? ""} onChange={(e) => set("place", e.target.value)} placeholder="Hotel Marriott Lima" />
+                </Field>
+                <Field label="Direccion">
+                  <input className={inputCls} value={draft.address ?? ""} onChange={(e) => set("address", e.target.value)} placeholder="Av. Principal 123, Lima" />
+                </Field>
+              </>
+            )}
+            {key === "countdown" && (
+              <p className="text-xs text-gray-500">La cuenta regresiva se calcula automaticamente desde la fecha del evento.</p>
+            )}
+            {key === "gallery" && (
+              <>
+                <div className="flex gap-2">
+                  <input
+                    className="flex-1 rounded-lg border border-gray-200 px-3 py-2 text-sm focus:outline-none"
+                    value={galleryInputUrl}
+                    onChange={(e) => setGalleryInputUrl(e.target.value)}
+                    placeholder="URL de imagen..."
+                    onKeyDown={(e) => e.key === "Enter" && addGalleryUrl()}
+                  />
+                  <button type="button" onClick={addGalleryUrl} className="rounded-lg bg-indigo-500 px-3 py-2 text-xs text-white font-medium whitespace-nowrap">
+                    + URL
+                  </button>
+                </div>
+                <Field label="o subir archivos">
+                  <input type="file" accept="image/*" multiple ref={galleryFileRef} onChange={addGalleryFiles} className="text-xs w-full" />
+                </Field>
+                {(draft.gallery ?? []).length > 0 && (
+                  <div className="grid grid-cols-3 gap-2">
+                    {(draft.gallery ?? []).map((src, i) => (
+                      <div key={i} className="relative aspect-square rounded-lg overflow-hidden group bg-gray-100">
+                        {/* eslint-disable-next-line @next/next/no-img-element */}
+                        <img src={src} alt="" className="w-full h-full object-cover" />
+                        <button
+                          type="button"
+                          onClick={() => removeGalleryItem(i)}
+                          className="absolute top-1 right-1 bg-red-500 text-white rounded-full w-5 h-5 text-xs hidden group-hover:flex items-center justify-center"
+                        >
+                          x
+                        </button>
+                      </div>
+                    ))}
+                  </div>
+                )}
+              </>
+            )}
+            {key === "message" && (
+              <Field label="Mensaje para los invitados">
+                <textarea
+                  className={`${inputCls} h-24 resize-none`}
+                  value={draft.message ?? ""}
+                  onChange={(e) => set("message", e.target.value)}
+                  placeholder="Escribe un mensaje especial..."
+                />
+              </Field>
+            )}
+            {key === "dressCode" && (
+              <Field label="Dress code">
+                <input className={inputCls} value={draft.dressCode ?? ""} onChange={(e) => set("dressCode", e.target.value)} placeholder="Ej: Formal, etiqueta oscura" />
+              </Field>
+            )}
+            {key === "map" && (
+              <>
+                <Field label="URL embed de Google Maps">
+                  <input className={inputCls} value={draft.mapUrl ?? ""} onChange={(e) => set("mapUrl", e.target.value)} placeholder="https://www.google.com/maps/embed?..." />
+                </Field>
+                <p className="text-xs text-gray-400">En Google Maps → Compartir → Insertar un mapa → copia la URL del src del iframe.</p>
+              </>
+            )}
+            {key === "rsvp" && (
+              <p className="text-xs text-gray-500">El formulario RSVP se activa automaticamente para los invitados en la pagina publica.</p>
+            )}
+            {key === "music" && (
+              <Field label="URL del audio de fondo (MP3/OGG)">
+                <input className={inputCls} value={draft.musicUrl ?? ""} onChange={(e) => set("musicUrl", e.target.value)} placeholder="https://example.com/cancion.mp3" />
+              </Field>
+            )}
+          </SectionPanel>
+        ))}
+
+        {/* Save */}
+        <div className="rounded-xl border border-gray-200 bg-white p-4 space-y-3">
+          <button
+            type="button"
+            onClick={handleSave}
+            disabled={saving || !draft.title}
+            className="w-full rounded-xl bg-indigo-600 py-3 text-sm font-semibold text-white disabled:opacity-50 hover:bg-indigo-700 transition-colors"
+          >
+            {saving ? "Guardando..." : "Guardar pagina"}
+          </button>
+          {publicUrl && (
+            <a href={publicUrl} target="_blank" rel="noopener noreferrer" className="block text-center text-xs text-indigo-600 underline">
+              Ver pagina publica →
+            </a>
+          )}
+        </div>
+      </aside>
+
+      {/* Right: live preview */}
+      <div className="overflow-y-auto rounded-2xl bg-gray-100 p-6">
+        <p className="text-xs text-center text-gray-400 mb-4 uppercase tracking-widest">Vista previa en vivo</p>
+        <div className="mx-auto max-w-lg">
+          <PagePreview draft={draft} />
+        </div>
+      </div>
+    </div>
+  );
+}

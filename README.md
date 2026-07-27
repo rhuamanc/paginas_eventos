@@ -1,36 +1,87 @@
-This is a [Next.js](https://nextjs.org) project bootstrapped with [`create-next-app`](https://nextjs.org/docs/app/api-reference/cli/create-next-app).
+# Invita Studio
 
-## Getting Started
+Plataforma web para crear paginas de invitaciones muy personalizables (bodas, cumpleanos, baby shower, graduacion, etc.) con editor visual en tiempo real.
 
-First, run the development server:
+## Lo que ya incluye
+
+- Landing moderna y responsive.
+- Dashboard para ver invitaciones creadas.
+- Dashboard privado por usuario autenticado.
+- Editor visual con:
+  - Insercion de imagenes por URL.
+  - Insercion de imagenes por archivo local.
+  - Arrastrar elementos libremente en el lienzo.
+  - Capas avanzadas: bloquear, duplicar, enviar al frente/atras.
+  - Textos editables y rotables.
+  - Modo dibujo para trazar a mano encima de la tarjeta.
+  - Preview en vivo del resultado.
+- Vista publica por slug para compartir invitaciones.
+- Cuenta regresiva del evento.
+- Formulario RSVP publico.
+- Vista privada de respuestas RSVP desde dashboard.
+- API routes para auth, invitaciones y RSVP.
+
+## Stack
+
+- Next.js 16 + App Router
+- TypeScript
+- Tailwind CSS v4
+- MongoDB Atlas + Mongoose
+- NextAuth (credenciales)
+
+## Ejecutar en local
+
+1. Instala dependencias:
+
+```bash
+npm install
+```
+
+2. Copia variables de entorno:
+
+```bash
+copy .env.example .env.local
+```
+
+3. Configura en `.env.local`:
+
+- `MONGO_URI`
+- `NEXTAUTH_SECRET`
+- `NEXTAUTH_URL`
+
+4. Inicia el proyecto:
 
 ```bash
 npm run dev
-# or
-yarn dev
-# or
-pnpm dev
-# or
-bun dev
 ```
 
-Open [http://localhost:3000](http://localhost:3000) with your browser to see the result.
+5. Abre:
 
-You can start editing the page by modifying `app/page.tsx`. The page auto-updates as you edit the file.
+http://localhost:3000
 
-This project uses [`next/font`](https://nextjs.org/docs/app/building-your-application/optimizing/fonts) to automatically optimize and load [Geist](https://vercel.com/font), a new font family for Vercel.
+## Scripts
 
-## Learn More
+- `npm run dev`: entorno de desarrollo.
+- `npm run build`: build de produccion.
+- `npm run start`: correr build localmente.
+- `npm run lint`: validacion de codigo.
 
-To learn more about Next.js, take a look at the following resources:
+## Despliegue en Vercel
 
-- [Next.js Documentation](https://nextjs.org/docs) - learn about Next.js features and API.
-- [Learn Next.js](https://nextjs.org/learn) - an interactive Next.js tutorial.
+1. Sube este repositorio a GitHub.
+2. En Vercel, crea un proyecto importando el repo.
+3. Configura variables en Vercel Project Settings > Environment Variables:
+  - `MONGO_URI`
+  - `NEXTAUTH_SECRET`
+  - `NEXTAUTH_URL` (tu dominio final)
+   - `NEXT_PUBLIC_BASE_URL` con tu dominio final.
+4. Ejecuta deploy.
 
-You can check out [the Next.js GitHub repository](https://github.com/vercel/next.js) - your feedback and contributions are welcome!
+## Flujo sugerido de uso
 
-## Deploy on Vercel
-
-The easiest way to deploy your Next.js app is to use the [Vercel Platform](https://vercel.com/new?utm_medium=default-template&filter=next.js&utm_source=create-next-app&utm_campaign=create-next-app-readme) from the creators of Next.js.
-
-Check out our [Next.js deployment documentation](https://nextjs.org/docs/app/building-your-application/deploying) for more details.
+1. Crea cuenta en `/registro` e inicia sesion.
+2. Ve a `/editor`.
+3. Crea tu tarjeta con imagenes, drag, capas y dibujo.
+4. Guarda la invitacion.
+5. Copia el link publico generado (`/i/tu-slug`).
+6. Revisa confirmaciones en tu dashboard privado.
