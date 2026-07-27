@@ -9,11 +9,11 @@ export default async function TopNav() {
 
   return (
     <header className="border-b border-[color:var(--line)] bg-white/80 backdrop-blur">
-      <div className="mx-auto flex w-full max-w-6xl items-center justify-between px-6 py-3 md:px-12">
-        <Link href="/" className="font-serif text-2xl">Invita Studio</Link>
-        <nav className="flex items-center gap-2">
-          <Link href="/editor" className="rounded-full border border-[color:var(--line)] px-3 py-1.5 text-sm font-semibold">Editor</Link>
-          <Link href="/dashboard" className="rounded-full border border-[color:var(--line)] px-3 py-1.5 text-sm font-semibold">Dashboard</Link>
+      <div className="mx-auto flex w-full max-w-6xl items-center justify-between gap-2 px-4 py-3 md:px-12">
+        <Link href="/" className="font-serif text-xl md:text-2xl shrink-0">Invita Studio</Link>
+        <nav className="flex items-center gap-1.5 flex-wrap justify-end">
+          <Link href="/editor" className="rounded-full border border-[color:var(--line)] px-2.5 py-1 text-xs font-semibold md:px-3 md:py-1.5 md:text-sm">Editor</Link>
+          <Link href="/dashboard" className="rounded-full border border-[color:var(--line)] px-2.5 py-1 text-xs font-semibold md:px-3 md:py-1.5 md:text-sm">Dashboard</Link>
           {session?.user ? (
             <>
               <div className="hidden items-center gap-2 rounded-full border border-[color:var(--line)] bg-white px-2 py-1 md:flex">

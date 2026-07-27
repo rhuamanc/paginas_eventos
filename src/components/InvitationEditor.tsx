@@ -2,7 +2,13 @@
 
 import { useState, useRef, useCallback } from "react";
 import { useRouter } from "next/navigation";
+import dynamic from "next/dynamic";
 import type { Invitation, EventType, ThemeStyle, SectionKey } from "@/types/invitation";
+
+const MapPicker = dynamic(() => import("./MapPicker"), {
+  ssr: false,
+  loading: () => <p className="text-xs text-gray-400">Cargando mapa...</p>,
+});
 
 type DraftInvitation = Omit<Invitation, "id" | "slug" | "ownerId" | "createdAt" | "updatedAt"> & {
   id?: string;
@@ -429,9 +435,9 @@ export default function InvitationEditor({ initial }: { initial?: Invitation }) 
   const publicUrl = draft.slug ? `/i/${draft.slug}` : null;
 
   return (
-    <div className="grid md:grid-cols-[420px_1fr] gap-4" style={{ height: "calc(100vh - 130px)" }}>
+    <div className="grid gap-4 md:grid-cols-[420px_1fr]" style={{ height: "auto" }}>
       {/* Left: controls */}
-      <aside className="overflow-y-auto rounded-2xl border border-gray-200 bg-gray-50 p-4 space-y-3">
+      <aside className="overflow-y-auto rounded-2xl border border-gray-200 bg-gray-50 p-4 space-y-3 md:max-h-[calc(100vh-130px)] md:sticky md:top-4">
         {/* Theme */}
         <div className="rounded-xl border border-gray-200 bg-white p-4 space-y-3">
           <h2 className="text-xs font-semibold uppercase tracking-wider text-gray-500">Tema visual</h2>
@@ -594,10 +600,13 @@ export default function InvitationEditor({ initial }: { initial?: Invitation }) 
             )}
             {key === "map" && (
               <>
-                <Field label="URL embed de Google Maps">
-                  <input className={inputCls} value={draft.mapUrl ?? ""} onChange={(e) => set("mapUrl", e.target.value)} placeholder="https://www.google.com/maps/embed?..." />
-                </Field>
-                <p className="text-xs text-gray-400">En Google Maps → Compartir → Insertar un mapa → copia la URL del src del iframe.</p>
+                <MapPicker
+                  value={draft.mapUrl ?? ""}
+                  onChange={(embedUrl, address) => {
+                    set("mapUrl", embedUrl);
+                    if (!draft.address) set("address", address.split(",").slice(0, 3).join(","));
+                  }}
+                />
               </>
             )}
             {key === "rsvp" && (
@@ -630,9 +639,9 @@ export default function InvitationEditor({ initial }: { initial?: Invitation }) 
       </aside>
 
       {/* Right: live preview */}
-      <div className="overflow-y-auto rounded-2xl bg-gray-100 p-6">
+      <div className="overflow-x-hidden overflow-y-auto rounded-2xl bg-gray-100 p-4 md:p-6">
         <p className="text-xs text-center text-gray-400 mb-4 uppercase tracking-widest">Vista previa en vivo</p>
-        <div className="mx-auto max-w-lg">
+        <div className="mx-auto w-full max-w-lg overflow-hidden">
           <PagePreview draft={draft} />
         </div>
       </div>

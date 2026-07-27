@@ -138,7 +138,7 @@ export default async function PublicInvitationPage({ params }: Props) {
             return (
               <section key="map" className="py-14 px-6 text-center">
                 <p className="text-xs uppercase tracking-widest opacity-60 mb-6">Como llegar</p>
-                <div className="rounded-2xl overflow-hidden max-w-3xl mx-auto shadow-lg" style={{ height: 320 }}>
+                <div className="rounded-2xl overflow-hidden max-w-3xl mx-auto shadow-lg w-full" style={{ height: 320 }}>
                   <iframe src={inv.mapUrl} className="w-full h-full border-0" title="Ubicacion del evento" loading="lazy" />
                 </div>
               </section>

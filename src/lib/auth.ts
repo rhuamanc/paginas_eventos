@@ -26,6 +26,7 @@ declare module "next-auth/jwt" {
 }
 
 export const authOptions: NextAuthOptions = {
+  secret: process.env.NEXTAUTH_SECRET ?? process.env.AUTH_SECRET,
   session: {
     strategy: "jwt",
   },
@@ -111,6 +112,29 @@ export const authOptions: NextAuthOptions = {
     },
   },
   callbacks: {
+    async redirect({ url, baseUrl }) {
+      if (url.startsWith("/")) {
+        return `${baseUrl}${url}`;
+      }
+
+      try {
+        const target = new URL(url);
+        const base = new URL(baseUrl);
+
+        if (target.origin === base.origin) {
+          return url;
+        }
+
+        // Corrige callbacks viejos que quedaron apuntando a localhost.
+        if (target.hostname === "localhost" || target.hostname === "127.0.0.1") {
+          return `${base.origin}${target.pathname}${target.search}${target.hash}`;
+        }
+      } catch {
+        return baseUrl;
+      }
+
+      return baseUrl;
+    },
     async jwt({ token, user, account }) {
       if (account?.provider === "google" && account.access_token) {
         token.accessToken = account.access_token;
