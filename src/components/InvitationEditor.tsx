@@ -3,6 +3,7 @@
 import { useState, useRef, useCallback } from "react";
 import { useRouter } from "next/navigation";
 import dynamic from "next/dynamic";
+import ImageUploader from "./ImageUploader";
 import type { Invitation, EventType, ThemeStyle, SectionKey } from "@/types/invitation";
 
 const MapPicker = dynamic(() => import("./MapPicker"), {
@@ -333,9 +334,6 @@ const inputCls = "w-full rounded-lg border border-gray-200 px-3 py-2 text-sm foc
 export default function InvitationEditor({ initial }: { initial?: Invitation }) {
   const router = useRouter();
   const [saving, setSaving] = useState(false);
-  const [galleryInputUrl, setGalleryInputUrl] = useState("");
-  const heroFileRef = useRef<HTMLInputElement>(null);
-  const galleryFileRef = useRef<HTMLInputElement>(null);
 
   const [draft, setDraft] = useState<DraftInvitation>(() => {
     if (!initial) {
@@ -378,35 +376,8 @@ export default function InvitationEditor({ initial }: { initial?: Invitation }) 
     }));
   }, []);
 
-  const addGalleryUrl = () => {
-    const url = galleryInputUrl.trim();
-    if (!url) return;
-    setDraft((d) => ({ ...d, gallery: [...(d.gallery ?? []), url] }));
-    setGalleryInputUrl("");
-  };
-
-  const addGalleryFiles = (e: React.ChangeEvent<HTMLInputElement>) => {
-    Array.from(e.target.files ?? []).forEach((file) => {
-      const reader = new FileReader();
-      reader.onload = (ev) => {
-        setDraft((d) => ({ ...d, gallery: [...(d.gallery ?? []), ev.target?.result as string] }));
-      };
-      reader.readAsDataURL(file);
-    });
-    e.target.value = "";
-  };
-
   const removeGalleryItem = (idx: number) => {
     setDraft((d) => ({ ...d, gallery: (d.gallery ?? []).filter((_, i) => i !== idx) }));
-  };
-
-  const addHeroFile = (e: React.ChangeEvent<HTMLInputElement>) => {
-    const file = e.target.files?.[0];
-    if (!file) return;
-    const reader = new FileReader();
-    reader.onload = (ev) => set("heroImage", ev.target?.result as string);
-    reader.readAsDataURL(file);
-    e.target.value = "";
   };
 
   const handleSave = async () => {
@@ -520,12 +491,11 @@ export default function InvitationEditor({ initial }: { initial?: Invitation }) 
                 <Field label="Subtitulo">
                   <input className={inputCls} value={draft.subtitle ?? ""} onChange={(e) => set("subtitle", e.target.value)} placeholder="Un mensaje de bienvenida" />
                 </Field>
-                <Field label="Imagen de fondo (URL)">
-                  <input className={inputCls} value={draft.heroImage ?? ""} onChange={(e) => set("heroImage", e.target.value)} placeholder="https://..." />
-                </Field>
-                <Field label="o subir imagen desde tu dispositivo">
-                  <input type="file" accept="image/*" ref={heroFileRef} onChange={addHeroFile} className="text-xs w-full" />
-                </Field>
+                <ImageUploader
+                  label="Imagen de portada"
+                  value={draft.heroImage ?? ""}
+                  onChange={(url) => set("heroImage", url)}
+                />
               </>
             )}
             {key === "details" && (
@@ -548,40 +518,12 @@ export default function InvitationEditor({ initial }: { initial?: Invitation }) 
               <p className="text-xs text-gray-500">La cuenta regresiva se calcula automaticamente desde la fecha del evento.</p>
             )}
             {key === "gallery" && (
-              <>
-                <div className="flex gap-2">
-                  <input
-                    className="flex-1 rounded-lg border border-gray-200 px-3 py-2 text-sm focus:outline-none"
-                    value={galleryInputUrl}
-                    onChange={(e) => setGalleryInputUrl(e.target.value)}
-                    placeholder="URL de imagen..."
-                    onKeyDown={(e) => e.key === "Enter" && addGalleryUrl()}
-                  />
-                  <button type="button" onClick={addGalleryUrl} className="rounded-lg bg-indigo-500 px-3 py-2 text-xs text-white font-medium whitespace-nowrap">
-                    + URL
-                  </button>
-                </div>
-                <Field label="o subir archivos">
-                  <input type="file" accept="image/*" multiple ref={galleryFileRef} onChange={addGalleryFiles} className="text-xs w-full" />
-                </Field>
-                {(draft.gallery ?? []).length > 0 && (
-                  <div className="grid grid-cols-3 gap-2">
-                    {(draft.gallery ?? []).map((src, i) => (
-                      <div key={i} className="relative aspect-square rounded-lg overflow-hidden group bg-gray-100">
-                        {/* eslint-disable-next-line @next/next/no-img-element */}
-                        <img src={src} alt="" className="w-full h-full object-cover" />
-                        <button
-                          type="button"
-                          onClick={() => removeGalleryItem(i)}
-                          className="absolute top-1 right-1 bg-red-500 text-white rounded-full w-5 h-5 text-xs hidden group-hover:flex items-center justify-center"
-                        >
-                          x
-                        </button>
-                      </div>
-                    ))}
-                  </div>
-                )}
-              </>
+              <ImageUploader
+                label="Fotos de la galeria (puedes subir varias a la vez)"
+                multiple
+                value={draft.gallery ?? []}
+                onChange={(urls) => set("gallery", urls)}
+              />
             )}
             {key === "message" && (
               <Field label="Mensaje para los invitados">
