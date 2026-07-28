@@ -1,6 +1,7 @@
 "use client";
 
 import { useEffect, useRef, useState } from "react";
+import LoadingSpinner from "./LoadingSpinner";
 
 type Props = {
   value: string; // URL embed actual (puede estar vacia)
@@ -141,9 +142,10 @@ export default function MapPicker({ value, onChange }: Props) {
           type="button"
           onClick={() => void search()}
           disabled={searching}
-          className="rounded-lg bg-indigo-500 px-3 py-2 text-xs font-medium text-white disabled:opacity-50"
+          className="inline-flex items-center gap-2 rounded-lg bg-indigo-500 px-3 py-2 text-xs font-medium text-white disabled:opacity-50"
         >
-          {searching ? "..." : "Buscar"}
+          {searching ? <LoadingSpinner size="sm" className="text-white" /> : null}
+          {searching ? "Buscando..." : "Buscar"}
         </button>
       </div>
 
@@ -181,6 +183,13 @@ export default function MapPicker({ value, onChange }: Props) {
         className="h-64 w-full rounded-xl border border-gray-200 overflow-hidden"
         style={{ zIndex: 0 }}
       />
+
+      {!mapReady ? (
+        <div className="flex items-center gap-2 text-xs text-gray-400">
+          <LoadingSpinner size="sm" className="text-gray-400" />
+          Preparando mapa interactivo...
+        </div>
+      ) : null}
 
       {/* Coordenadas seleccionadas */}
       {coords && (

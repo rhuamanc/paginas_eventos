@@ -4,6 +4,7 @@ import { useState, useRef, useCallback } from "react";
 import { useRouter } from "next/navigation";
 import dynamic from "next/dynamic";
 import ImageUploader from "./ImageUploader";
+import LoadingSpinner from "./LoadingSpinner";
 import type { Invitation, EventType, ThemeStyle, SectionKey } from "@/types/invitation";
 
 const MapPicker = dynamic(() => import("./MapPicker"), {
@@ -568,8 +569,9 @@ export default function InvitationEditor({ initial }: { initial?: Invitation }) 
             type="button"
             onClick={handleSave}
             disabled={saving || !draft.title}
-            className="w-full rounded-xl bg-indigo-600 py-3 text-sm font-semibold text-white disabled:opacity-50 hover:bg-indigo-700 transition-colors"
+            className="inline-flex w-full items-center justify-center gap-2 rounded-xl bg-indigo-600 py-3 text-sm font-semibold text-white disabled:opacity-50 hover:bg-indigo-700 transition-colors"
           >
+            {saving ? <LoadingSpinner size="sm" className="text-white" /> : null}
             {saving ? "Guardando..." : "Guardar pagina"}
           </button>
           {publicUrl && (

@@ -2,6 +2,7 @@
 
 import { signIn } from "next-auth/react";
 import { useState } from "react";
+import LoadingSpinner from "./LoadingSpinner";
 
 export default function RegisterForm() {
   const [name, setName] = useState("");
@@ -80,7 +81,8 @@ export default function RegisterForm() {
         onChange={(event) => setPassword(event.target.value)}
         className="w-full rounded-lg border border-[color:var(--line)] px-3 py-2"
       />
-      <button className="w-full rounded-lg bg-[color:var(--brand)] px-3 py-2 font-semibold text-white" disabled={loading}>
+      <button className="inline-flex w-full items-center justify-center gap-2 rounded-lg bg-[color:var(--brand)] px-3 py-2 font-semibold text-white" disabled={loading}>
+        {loading ? <LoadingSpinner size="sm" className="text-white" /> : null}
         {loading ? "Creando..." : "Crear y entrar"}
       </button>
       {error ? <p className="text-sm text-red-700">{error}</p> : null}
