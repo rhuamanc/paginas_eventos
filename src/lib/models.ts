@@ -36,9 +36,7 @@ const UserSchema = new Schema<AppUser>(
     id: { type: String, required: true, unique: true },
     name: { type: String, required: true },
     email: { type: String, required: true, unique: true, index: true },
-    passwordHash: { type: String },
-    provider: { type: String, enum: ["credentials", "google"], default: "credentials" },
-    googleId: { type: String, index: true },
+    googleId: { type: String, required: true, index: true },
     createdAt: { type: String, required: true },
   },
   { versionKey: false }

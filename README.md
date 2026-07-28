@@ -1,4 +1,4 @@
-# Invita Studio
+# Huaman Studio
 
 Plataforma web para crear paginas de invitaciones muy personalizables (bodas, cumpleanos, baby shower, graduacion, etc.) con editor visual en tiempo real.
 

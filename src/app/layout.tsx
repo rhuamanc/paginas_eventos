@@ -15,7 +15,7 @@ const playfair = Playfair_Display({
 });
 
 export const metadata: Metadata = {
-  title: "Invita Studio",
+  title: "Huaman Studio",
   description: "Crea invitaciones personalizadas para bodas, cumpleanos y mas.",
 };
 

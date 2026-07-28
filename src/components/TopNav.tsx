@@ -10,7 +10,7 @@ export default async function TopNav() {
   return (
     <header className="border-b border-[color:var(--line)] bg-white/80 backdrop-blur">
       <div className="mx-auto flex w-full max-w-6xl items-center justify-between gap-2 px-4 py-3 md:px-12">
-        <Link href="/" className="font-serif text-xl md:text-2xl shrink-0">Invita Studio</Link>
+        <Link href="/" className="font-serif text-xl md:text-2xl shrink-0">Huaman Studio</Link>
         <nav className="flex items-center gap-1.5 flex-wrap justify-end">
           <Link href="/editor" className="rounded-full border border-[color:var(--line)] px-2.5 py-1 text-xs font-semibold md:px-3 md:py-1.5 md:text-sm">Editor</Link>
           <Link href="/dashboard" className="rounded-full border border-[color:var(--line)] px-2.5 py-1 text-xs font-semibold md:px-3 md:py-1.5 md:text-sm">Dashboard</Link>

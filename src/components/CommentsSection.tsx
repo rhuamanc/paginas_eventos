@@ -54,9 +54,9 @@ export default function CommentsSection({ invitationId }: Props) {
   const [uploading, setUploading] = useState(false);
   const [status, setStatus] = useState("");
 
-  const isGoogleUser = session?.user?.provider === "google";
-  const googleAvatar = isGoogleUser ? session.user.image || "" : "";
-  const googleName = isGoogleUser ? session.user.name || "Usuario de Google" : "";
+  const userAvatar = session?.user?.image || "";
+  const userName = session?.user?.name || "Usuario";
+  const isLoggedIn = !!session?.user?.id;
 
   async function loadComments() {
     const response = await fetch(`/api/comments?invitationId=${invitationId}`);
@@ -69,12 +69,12 @@ export default function CommentsSection({ invitationId }: Props) {
   }, [invitationId]);
 
   useEffect(() => {
-    if (!isGoogleUser) {
+    if (!isLoggedIn) {
       setText("");
       setImageUrl("");
       setStatus("");
     }
-  }, [isGoogleUser]);
+  }, [isLoggedIn]);
 
   async function uploadImage(file: File) {
     if (!file.type.startsWith("image/")) {
@@ -82,8 +82,8 @@ export default function CommentsSection({ invitationId }: Props) {
       return;
     }
 
-    if (!isGoogleUser) {
-      setStatus("Debes iniciar sesion con Google para publicar fotos.");
+    if (!isLoggedIn) {
+      setStatus("Debes iniciar sesion para publicar fotos.");
       return;
     }
 
@@ -117,8 +117,8 @@ export default function CommentsSection({ invitationId }: Props) {
   async function submitComment(event: React.FormEvent<HTMLFormElement>) {
     event.preventDefault();
 
-    if (!isGoogleUser) {
-      setStatus("Debes iniciar sesion con Google para comentar.");
+    if (!isLoggedIn) {
+      setStatus("Debes iniciar sesion para comentar.");
       return;
     }
 
@@ -162,7 +162,7 @@ export default function CommentsSection({ invitationId }: Props) {
     <section className="space-y-4 rounded-2xl border border-[color:var(--line)] bg-white p-4">
       <div className="flex items-center justify-between gap-3">
         <h3 className="font-serif text-2xl">Comentarios</h3>
-        {!isGoogleUser ? (
+        {!isLoggedIn ? (
           <button
             type="button"
             onClick={() => signIn("google")}
@@ -173,17 +173,17 @@ export default function CommentsSection({ invitationId }: Props) {
         ) : null}
       </div>
 
-      {isGoogleUser ? (
+      {isLoggedIn ? (
         <form onSubmit={submitComment}>
           {/* Fila principal: avatar + caja de texto */}
           <div className="flex items-start gap-3">
             {/* Avatar */}
-            {googleAvatar ? (
+            {userAvatar ? (
               // eslint-disable-next-line @next/next/no-img-element
-              <img src={googleAvatar} alt={googleName} referrerPolicy="no-referrer" className="h-10 w-10 flex-shrink-0 rounded-full object-cover" />
+              <img src={userAvatar} alt={userName} referrerPolicy="no-referrer" className="h-10 w-10 flex-shrink-0 rounded-full object-cover" />
             ) : (
               <div className="flex h-10 w-10 flex-shrink-0 items-center justify-center rounded-full bg-[color:var(--brand)] text-sm font-semibold text-white">
-                {googleName.slice(0, 1).toUpperCase()}
+                {userName.slice(0, 1).toUpperCase()}
               </div>
             )}
 
@@ -209,7 +209,7 @@ export default function CommentsSection({ invitationId }: Props) {
               <textarea
                 value={text}
                 onChange={(event) => setText(event.target.value)}
-                placeholder={`Comenta como ${googleName}…`}
+                placeholder={`Comenta como ${userName}…`}
                 rows={1}
                 className="w-full resize-none rounded-2xl bg-transparent px-4 py-2.5 text-sm focus:outline-none"
                 style={{ minHeight: "42px" }}

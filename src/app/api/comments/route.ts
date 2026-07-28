@@ -35,9 +35,9 @@ export async function POST(request: Request) {
 
   const session = await getAuthSession();
 
-  if (session?.user?.provider !== "google") {
+  if (!session?.user?.id) {
     return NextResponse.json(
-      { error: "Debes iniciar sesion con Google para comentar." },
+      { error: "Debes iniciar sesion para comentar." },
       { status: 403 }
     );
   }

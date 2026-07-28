@@ -12,7 +12,7 @@ export default function Home() {
             Crea invitaciones unicas con arrastrar, dibujar y previsualizar al instante.
           </h1>
           <p className="mt-5 max-w-xl text-lg text-[color:var(--ink-soft)]">
-            Invita Studio te permite disenar tarjetas para bodas, cumpleanos y cualquier evento con total libertad: sube imagenes, mueve elementos y comparte un link publico.
+            Huaman Studio te permite disenar tarjetas para bodas, cumpleanos y cualquier evento con total libertad: sube imagenes, mueve elementos y comparte un link publico.
           </p>
           <div className="mt-8 flex flex-col gap-3 sm:flex-row">
             <Link

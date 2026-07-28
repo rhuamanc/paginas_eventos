@@ -21,9 +21,9 @@ function getDriveUserMessage(detail: string) {
 export async function POST(request: Request) {
   const session = await getAuthSession();
 
-  if (!session?.user?.id || session.user.provider !== "google" || !session.accessToken) {
+  if (!session?.user?.id || !session.accessToken) {
     return NextResponse.json(
-      { error: "Debes iniciar sesion con Google para subir a Drive." },
+      { error: "Debes iniciar sesion para subir imagenes." },
       { status: 401 }
     );
   }

@@ -49,9 +49,7 @@ export type AppUser = {
   id: string;
   name: string;
   email: string;
-  passwordHash?: string;
-  provider?: "credentials" | "google";
-  googleId?: string;
+  googleId: string;
   createdAt: string;
 };
 
