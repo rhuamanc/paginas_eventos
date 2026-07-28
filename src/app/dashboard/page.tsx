@@ -3,6 +3,7 @@ import { getAuthSession } from "@/lib/auth";
 import { listInvitationsByOwner } from "@/lib/storage";
 import { redirect } from "next/navigation";
 import LogoutButton from "@/components/LogoutButton";
+import DashboardContent from "@/components/DashboardContent";
 
 export const dynamic = "force-dynamic";
 
@@ -31,38 +32,7 @@ export default async function DashboardPage() {
           </div>
         </div>
 
-        <div className="grid gap-4">
-          {invitations.map((invitation) => (
-            <article key={invitation.id} className="paper-card p-4">
-              <div className="flex flex-wrap items-center justify-between gap-3">
-                <div>
-                  <h2 className="font-serif text-2xl">{invitation.title}</h2>
-                  <p className="text-sm text-[color:var(--ink-soft)]">/{invitation.slug}</p>
-                </div>
-                <div className="flex flex-wrap gap-2">
-                  <Link
-                    href={`/editor?id=${invitation.id}`}
-                    className="rounded-lg border border-[color:var(--line)] bg-white px-3 py-2 text-sm font-semibold"
-                  >
-                    Editar
-                  </Link>
-                  <Link
-                    href={`/dashboard/${invitation.id}/respuestas`}
-                    className="rounded-lg border border-[color:var(--line)] bg-white px-3 py-2 text-sm font-semibold"
-                  >
-                    Ver RSVP
-                  </Link>
-                  <Link
-                    href={`/i/${invitation.slug}`}
-                    className="rounded-lg bg-[color:var(--brand)] px-3 py-2 text-sm font-semibold text-white"
-                  >
-                    Ver publica
-                  </Link>
-                </div>
-              </div>
-            </article>
-          ))}
-        </div>
+        <DashboardContent initialInvitations={invitations} />
       </section>
     </main>
   );
