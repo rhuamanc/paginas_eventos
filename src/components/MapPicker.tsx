@@ -18,6 +18,30 @@ function buildEmbedUrl(lat: number, lng: number) {
   return `https://maps.google.com/maps?q=${lat},${lng}&output=embed&z=16`;
 }
 
+function parseCoordinates(input: string): { lat: number; lng: number } | null {
+  const normalized = input
+    .trim()
+    .replace(/lat\s*[:=]/gi, "")
+    .replace(/(lon|lng|long)\s*[:=]/gi, "")
+    .replace(/;/g, ",")
+    .replace(/\s+/g, " ");
+
+  // Formatos soportados: "-12.04,-77.03" o "-12.04 -77.03"
+  const commaMatch = normalized.match(/^(-?\d+(?:\.\d+)?)\s*,\s*(-?\d+(?:\.\d+)?)$/);
+  const spaceMatch = normalized.match(/^(-?\d+(?:\.\d+)?)\s+(-?\d+(?:\.\d+)?)$/);
+  const match = commaMatch || spaceMatch;
+
+  if (!match) return null;
+
+  const lat = Number(match[1]);
+  const lng = Number(match[2]);
+
+  if (!Number.isFinite(lat) || !Number.isFinite(lng)) return null;
+  if (lat < -90 || lat > 90 || lng < -180 || lng > 180) return null;
+
+  return { lat, lng };
+}
+
 export default function MapPicker({ value, onChange }: Props) {
   const mapRef = useRef<HTMLDivElement>(null);
   // eslint-disable-next-line @typescript-eslint/no-explicit-any
@@ -97,6 +121,22 @@ export default function MapPicker({ value, onChange }: Props) {
     const q = query.trim();
     if (!q) return;
 
+    const parsedCoords = parseCoordinates(q);
+    if (parsedCoords) {
+      const address = `Coordenadas: ${parsedCoords.lat.toFixed(5)}, ${parsedCoords.lng.toFixed(5)}`;
+      setResults([]);
+      setQuery(`${parsedCoords.lat}, ${parsedCoords.lng}`);
+
+      if (leafletRef.current) {
+        placeMarker(leafletRef.current.L, leafletRef.current.map, parsedCoords.lat, parsedCoords.lng, address);
+      } else {
+        setCoords({ lat: parsedCoords.lat, lng: parsedCoords.lng });
+        setSelectedAddress(address);
+        onChange(buildEmbedUrl(parsedCoords.lat, parsedCoords.lng), address);
+      }
+      return;
+    }
+
     setSearching(true);
     setResults([]);
 
@@ -135,7 +175,7 @@ export default function MapPicker({ value, onChange }: Props) {
           value={query}
           onChange={(e) => setQuery(e.target.value)}
           onKeyDown={(e) => e.key === "Enter" && void search()}
-          placeholder="Busca una dirección o lugar..."
+          placeholder="Busca lugar o ingresa lat,lng (ej: -12.0464,-77.0428)"
           className="flex-1 rounded-lg border border-gray-200 px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-indigo-300"
         />
         <button
@@ -169,7 +209,7 @@ export default function MapPicker({ value, onChange }: Props) {
       {/* Hint */}
       <p className="text-xs text-gray-400">
         {mapReady
-          ? "También puedes hacer clic directamente en el mapa para ajustar la ubicación."
+          ? "Tambien puedes hacer clic en el mapa o buscar por coordenadas (lat,lng)."
           : "Cargando mapa..."}
       </p>
 
