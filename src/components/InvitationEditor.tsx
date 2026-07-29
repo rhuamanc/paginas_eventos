@@ -43,9 +43,9 @@ const THEMES: Record<ThemeStyle, { label: string; bg: string; text: string; acce
 
 const EVENT_LABELS: Record<EventType, string> = {
   boda: "Boda",
-  cumpleanos: "Cumpleanos",
+  cumpleanos: "Cumpleaños",
   "baby-shower": "Baby Shower",
-  graduacion: "Graduacion",
+  graduacion: "Graduación",
   otro: "Otro evento",
 };
 
