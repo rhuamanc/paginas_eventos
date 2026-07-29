@@ -34,9 +34,13 @@ export default async function PublicInvitationPage({ params }: Props) {
 
   const theme = THEMES[inv.theme as keyof typeof THEMES] ?? THEMES.elegant;
   const accent = inv.primaryColor || theme.accent;
-  const sections: SectionKey[] = inv.sections?.length
-    ? inv.sections
+  const sectionOrder: SectionKey[] = inv.sectionOrder?.length
+    ? inv.sectionOrder
     : ["hero", "details", "countdown", "timeline", "gallery", "message", "dressCode", "map", "rsvp", "music"];
+  const enabledSections: SectionKey[] = inv.sections?.length
+    ? inv.sections
+    : sectionOrder;
+  const sections = sectionOrder.filter((section) => enabledSections.includes(section));
 
   const themeVars = {
     "--th-bg": theme.bg, "--th-text": inv.textColor || theme.text,

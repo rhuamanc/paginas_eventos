@@ -28,6 +28,7 @@ export const invitationSchema = z.object({
   primaryColor: z.string().max(32).optional(),
   textColor: z.string().max(32).optional(),
   sections: z.array(sectionKeySchema).default(["hero", "details", "countdown", "timeline", "gallery", "message", "dressCode", "map", "rsvp", "music"]),
+  sectionOrder: z.array(sectionKeySchema).default(["hero", "details", "countdown", "timeline", "gallery", "message", "dressCode", "map", "rsvp", "music"]),
 });
 
 export const rsvpSchema = z.object({

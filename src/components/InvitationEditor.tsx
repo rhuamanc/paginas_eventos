@@ -84,7 +84,15 @@ function getDefaultDraft(): DraftInvitation {
     primaryColor: "#d4608a",
     textColor: "",
     sections: [...ALL_SECTIONS],
+    sectionOrder: [...ALL_SECTIONS],
   };
+}
+
+function moveItem<T>(items: T[], fromIndex: number, toIndex: number) {
+  const next = [...items];
+  const [moved] = next.splice(fromIndex, 1);
+  next.splice(toIndex, 0, moved);
+  return next;
 }
 
 function formatDate(iso: string) {
@@ -115,7 +123,8 @@ function PagePreview({ draft }: { draft: DraftInvitation }) {
   const theme = THEMES[draft.theme] ?? THEMES.elegant;
   const accent = draft.primaryColor || theme.accent;
   const activeGallery = (draft.gallery ?? []).filter(Boolean);
-  const sections = draft.sections.length ? draft.sections : ALL_SECTIONS;
+  const orderedSections = draft.sectionOrder?.length ? draft.sectionOrder : ALL_SECTIONS;
+  const sections = orderedSections.filter((section) => draft.sections.includes(section));
 
   const style = {
     "--th-bg": theme.bg,
@@ -306,22 +315,47 @@ function SectionPanel({
   sectionKey,
   enabled,
   onToggle,
+  draggable,
+  onDragStart,
+  onDragOver,
+  onDrop,
+  isDragging,
+  isDropTarget,
   children,
 }: {
   sectionKey: SectionKey;
   enabled: boolean;
   onToggle: () => void;
+  draggable: boolean;
+  onDragStart: () => void;
+  onDragOver: () => void;
+  onDrop: () => void;
+  isDragging: boolean;
+  isDropTarget: boolean;
   children: React.ReactNode;
 }) {
   const [open, setOpen] = useState(false);
 
   return (
-    <div className="rounded-xl border border-gray-200 bg-white overflow-hidden">
+    <div
+      draggable={draggable}
+      onDragStart={draggable ? onDragStart : undefined}
+      onDragOver={draggable ? (event) => {
+        event.preventDefault();
+        onDragOver();
+      } : undefined}
+      onDrop={draggable ? (event) => {
+        event.preventDefault();
+        onDrop();
+      } : undefined}
+      className={`rounded-xl border bg-white overflow-hidden transition ${isDragging ? "opacity-50" : "opacity-100"} ${isDropTarget ? "border-indigo-400 ring-2 ring-indigo-200" : "border-gray-200"}`}
+    >
       <div
         className="flex items-center justify-between px-4 py-3 cursor-pointer hover:bg-gray-50 select-none"
         onClick={() => setOpen((o) => !o)}
       >
         <div className="flex items-center gap-3">
+          <span className="cursor-grab text-gray-400 active:cursor-grabbing" aria-hidden="true">⋮⋮</span>
           <button
             type="button"
             onClick={(e) => { e.stopPropagation(); onToggle(); }}
@@ -360,6 +394,8 @@ const inputCls = "w-full rounded-lg border border-gray-200 px-3 py-2 text-sm foc
 export default function InvitationEditor({ initial }: { initial?: Invitation }) {
   const router = useRouter();
   const [saving, setSaving] = useState(false);
+  const [draggingSection, setDraggingSection] = useState<SectionKey | null>(null);
+  const [dropTargetSection, setDropTargetSection] = useState<SectionKey | null>(null);
 
   const [draft, setDraft] = useState<DraftInvitation>(() => {
     if (!initial) {
@@ -387,6 +423,7 @@ export default function InvitationEditor({ initial }: { initial?: Invitation }) 
       primaryColor: initial.primaryColor ?? "",
       textColor: initial.textColor ?? "",
       sections: initial.sections ?? [...ALL_SECTIONS],
+      sectionOrder: initial.sectionOrder ?? initial.sections ?? [...ALL_SECTIONS],
     };
   });
 
@@ -401,6 +438,25 @@ export default function InvitationEditor({ initial }: { initial?: Invitation }) 
         ? d.sections.filter((s) => s !== key)
         : [...d.sections, key],
     }));
+  }, []);
+
+  const reorderSections = useCallback((fromKey: SectionKey, toKey: SectionKey) => {
+    if (fromKey === toKey) return;
+
+    setDraft((d) => {
+      const source = d.sectionOrder?.length ? d.sectionOrder : ALL_SECTIONS;
+      const fromIndex = source.indexOf(fromKey);
+      const toIndex = source.indexOf(toKey);
+
+      if (fromIndex === -1 || toIndex === -1) {
+        return d;
+      }
+
+      return {
+        ...d,
+        sectionOrder: moveItem(source, fromIndex, toIndex),
+      };
+    });
   }, []);
 
   const removeGalleryItem = (idx: number) => {
@@ -454,6 +510,7 @@ export default function InvitationEditor({ initial }: { initial?: Invitation }) 
   };
 
   const publicUrl = draft.slug ? `/i/${draft.slug}` : null;
+  const orderedSections = draft.sectionOrder?.length ? draft.sectionOrder : ALL_SECTIONS;
 
   return (
     <div className="grid gap-4 md:grid-cols-[420px_1fr]" style={{ height: "auto" }}>
@@ -526,12 +583,35 @@ export default function InvitationEditor({ initial }: { initial?: Invitation }) 
         </div>
 
         {/* Sections */}
-        {ALL_SECTIONS.map((key) => (
+        <div className="rounded-xl border border-dashed border-gray-300 bg-white/60 px-4 py-3 text-xs text-gray-500">
+          Arrastra las secciones desde el icono de puntos para cambiar el orden en la pagina publica y en la vista previa.
+        </div>
+
+        {orderedSections.map((key) => (
           <SectionPanel
             key={key}
             sectionKey={key}
             enabled={draft.sections.includes(key)}
             onToggle={() => toggleSection(key)}
+            draggable
+            onDragStart={() => {
+              setDraggingSection(key);
+              setDropTargetSection(null);
+            }}
+            onDragOver={() => {
+              if (draggingSection && draggingSection !== key) {
+                setDropTargetSection(key);
+              }
+            }}
+            onDrop={() => {
+              if (draggingSection) {
+                reorderSections(draggingSection, key);
+              }
+              setDraggingSection(null);
+              setDropTargetSection(null);
+            }}
+            isDragging={draggingSection === key}
+            isDropTarget={dropTargetSection === key}
           >
             {key === "hero" && (
               <>

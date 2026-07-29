@@ -71,6 +71,7 @@ export async function upsertInvitation(input: Partial<Invitation> & { title: str
     primaryColor: input.primaryColor ?? "",
     textColor: input.textColor ?? "",
     sections: input.sections ?? ["hero", "details", "countdown", "timeline", "gallery", "message", "dressCode", "map", "rsvp", "music"],
+    sectionOrder: input.sectionOrder ?? existing?.sectionOrder ?? ["hero", "details", "countdown", "timeline", "gallery", "message", "dressCode", "map", "rsvp", "music"],
     createdAt: (existing as unknown as Invitation)?.createdAt ?? now,
     updatedAt: now,
   };
@@ -120,6 +121,7 @@ export async function upsertInvitationForOwner(
     primaryColor: input.primaryColor ?? "",
     textColor: input.textColor ?? "",
     sections: input.sections ?? ["hero", "details", "countdown", "timeline", "gallery", "message", "dressCode", "map", "rsvp", "music"],
+    sectionOrder: input.sectionOrder ?? existing?.sectionOrder ?? ["hero", "details", "countdown", "timeline", "gallery", "message", "dressCode", "map", "rsvp", "music"],
     createdAt: (existing as unknown as Invitation)?.createdAt ?? now,
     updatedAt: now,
   };

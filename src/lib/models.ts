@@ -26,6 +26,7 @@ const InvitationSchema = new Schema<Invitation>(
     primaryColor: String,
     textColor: String,
     sections: [{ type: String, enum: SECTION_KEYS }],
+    sectionOrder: [{ type: String, enum: SECTION_KEYS }],
     createdAt: String,
     updatedAt: String,
   },
@@ -76,6 +77,9 @@ export const InvitationModel =
       // En dev, Next puede reutilizar modelos cacheados; agrega el campo si falta.
       if (!existing.schema.path("textColor")) {
         existing.schema.add({ textColor: String });
+      }
+      if (!existing.schema.path("sectionOrder")) {
+        existing.schema.add({ sectionOrder: [{ type: String, enum: SECTION_KEYS }] });
       }
       return existing;
     }
