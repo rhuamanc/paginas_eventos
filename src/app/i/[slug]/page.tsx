@@ -36,7 +36,7 @@ export default async function PublicInvitationPage({ params }: Props) {
   const accent = inv.primaryColor || theme.accent;
   const sections: SectionKey[] = inv.sections?.length
     ? inv.sections
-    : ["hero", "details", "countdown", "gallery", "message", "dressCode", "map", "rsvp", "music"];
+    : ["hero", "details", "countdown", "timeline", "gallery", "message", "dressCode", "map", "rsvp", "music"];
 
   const themeVars = {
     "--th-bg": theme.bg, "--th-text": inv.textColor || theme.text,
@@ -95,6 +95,25 @@ export default async function PublicInvitationPage({ params }: Props) {
               <section key="countdown" className="py-14 px-6 text-center">
                 <p className="text-xs uppercase tracking-widest opacity-60 mb-6">Cuenta regresiva</p>
                 <Countdown dateTime={inv.dateTime ?? ""} />
+              </section>
+            );
+
+          case "timeline":
+            if (!inv.timeline?.length) return null;
+            return (
+              <section key="timeline" className="py-14 px-6" style={{ background: "var(--th-card)" }}>
+                <p className="text-xs uppercase tracking-widest opacity-60 text-center mb-6">Programacion del evento</p>
+                <div className="mx-auto max-w-3xl space-y-3">
+                  {inv.timeline.map((item, index) => (
+                    <div key={`${item.time}-${item.title}-${index}`} className="grid gap-3 rounded-2xl bg-white/50 px-4 py-4 md:grid-cols-[120px_1fr]">
+                      <div className="text-lg font-semibold" style={{ color: "var(--th-accent)" }}>{item.time}</div>
+                      <div>
+                        <p className="text-lg font-semibold">{item.title}</p>
+                        {item.description ? <p className="mt-1 text-sm opacity-70">{item.description}</p> : null}
+                      </div>
+                    </div>
+                  ))}
+                </div>
               </section>
             );
 

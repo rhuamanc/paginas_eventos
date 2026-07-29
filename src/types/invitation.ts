@@ -1,9 +1,15 @@
 export type EventType = "boda" | "cumpleanos" | "baby-shower" | "graduacion" | "otro";
 export type ThemeStyle = "elegant" | "romantic" | "modern" | "floral";
+export type TimelineItem = {
+  time: string;
+  title: string;
+  description?: string;
+};
 export type SectionKey =
   | "hero"
   | "details"
   | "countdown"
+  | "timeline"
   | "gallery"
   | "message"
   | "dressCode"
@@ -27,6 +33,8 @@ export type Invitation = {
   address?: string;
   // Map
   mapUrl?: string;
+  // Timeline
+  timeline?: TimelineItem[];
   // Message
   message?: string;
   // Gallery

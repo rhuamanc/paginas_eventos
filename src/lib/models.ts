@@ -1,7 +1,7 @@
 import mongoose, { Schema, model, models } from "mongoose";
 import type { AppUser, Invitation, InvitationComment, RSVP } from "@/types/invitation";
 
-const SECTION_KEYS = ["hero", "details", "countdown", "gallery", "message", "dressCode", "map", "rsvp", "music"];
+const SECTION_KEYS = ["hero", "details", "countdown", "timeline", "gallery", "message", "dressCode", "map", "rsvp", "music"];
 
 const InvitationSchema = new Schema<Invitation>(
   {
@@ -17,6 +17,7 @@ const InvitationSchema = new Schema<Invitation>(
     place: String,
     address: String,
     mapUrl: String,
+    timeline: [{ time: String, title: String, description: String }],
     message: String,
     dressCode: String,
     musicUrl: String,

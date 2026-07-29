@@ -5,7 +5,7 @@ import { useRouter } from "next/navigation";
 import dynamic from "next/dynamic";
 import ImageUploader from "./ImageUploader";
 import LoadingSpinner from "./LoadingSpinner";
-import type { Invitation, EventType, ThemeStyle, SectionKey } from "@/types/invitation";
+import type { Invitation, EventType, ThemeStyle, SectionKey, TimelineItem } from "@/types/invitation";
 
 const MapPicker = dynamic(() => import("./MapPicker"), {
   ssr: false,
@@ -18,13 +18,14 @@ type DraftInvitation = Omit<Invitation, "id" | "slug" | "ownerId" | "createdAt" 
 };
 
 const ALL_SECTIONS: SectionKey[] = [
-  "hero", "details", "countdown", "gallery", "message", "dressCode", "map", "rsvp", "music",
+  "hero", "details", "countdown", "timeline", "gallery", "message", "dressCode", "map", "rsvp", "music",
 ];
 
 const SECTION_LABELS: Record<SectionKey, string> = {
   hero: "Portada principal",
   details: "Fecha, hora y lugar",
   countdown: "Cuenta regresiva",
+  timeline: "Timeline / programacion",
   gallery: "Galeria de fotos",
   message: "Mensaje personalizado",
   dressCode: "Dress code",
@@ -70,6 +71,11 @@ function getDefaultDraft(): DraftInvitation {
     place: "Hacienda Villa Jardin",
     address: "Av. Primavera 1234, Lima",
     mapUrl: "https://www.google.com/maps?q=Lima+Peru&output=embed",
+    timeline: [
+      { time: "7:00 AM", title: "Toma de fotos", description: "Sesión con familiares y padrinos" },
+      { time: "8:00 AM", title: "Recepcion de invitados", description: "Bienvenida y coctel inicial" },
+      { time: "9:00 AM", title: "Ceremonia", description: "Inicio del momento principal" },
+    ],
     message: "Gracias por acompanarnos en el inicio de esta nueva etapa. Tu presencia hara este momento aun mas inolvidable.",
     gallery: DEFAULT_GALLERY,
     dressCode: "Formal elegante",
@@ -177,6 +183,25 @@ function PagePreview({ draft }: { draft: DraftInvitation }) {
                         --
                       </div>
                       <p className="text-xs opacity-60 mt-1">{u}</p>
+                    </div>
+                  ))}
+                </div>
+              </section>
+            );
+
+          case "timeline":
+            if (!draft.timeline?.length) return null;
+            return (
+              <section key="timeline" className="py-8 px-6" style={{ background: "var(--th-card)" }}>
+                <p className="text-xs uppercase tracking-widest opacity-60 text-center mb-4">Programacion del evento</p>
+                <div className="mx-auto max-w-md space-y-3">
+                  {draft.timeline.map((item, index) => (
+                    <div key={`${item.time}-${item.title}-${index}`} className="grid grid-cols-[84px_1fr] gap-3 rounded-xl bg-white/10 px-3 py-3">
+                      <div className="text-sm font-semibold" style={{ color: "var(--th-accent)" }}>{item.time || "--:--"}</div>
+                      <div>
+                        <p className="text-sm font-semibold">{item.title || "Actividad"}</p>
+                        {item.description ? <p className="mt-1 text-xs opacity-70">{item.description}</p> : null}
+                      </div>
                     </div>
                   ))}
                 </div>
@@ -353,6 +378,7 @@ export default function InvitationEditor({ initial }: { initial?: Invitation }) 
       place: initial.place ?? "",
       address: initial.address ?? "",
       mapUrl: initial.mapUrl ?? "",
+      timeline: initial.timeline ?? [],
       message: initial.message ?? "",
       gallery: initial.gallery ?? [],
       dressCode: initial.dressCode ?? "",
@@ -379,6 +405,29 @@ export default function InvitationEditor({ initial }: { initial?: Invitation }) 
 
   const removeGalleryItem = (idx: number) => {
     setDraft((d) => ({ ...d, gallery: (d.gallery ?? []).filter((_, i) => i !== idx) }));
+  };
+
+  const updateTimelineItem = (index: number, key: keyof TimelineItem, value: string) => {
+    setDraft((d) => ({
+      ...d,
+      timeline: (d.timeline ?? []).map((item, itemIndex) =>
+        itemIndex === index ? { ...item, [key]: value } : item
+      ),
+    }));
+  };
+
+  const addTimelineItem = () => {
+    setDraft((d) => ({
+      ...d,
+      timeline: [...(d.timeline ?? []), { time: "", title: "", description: "" }],
+    }));
+  };
+
+  const removeTimelineItem = (index: number) => {
+    setDraft((d) => ({
+      ...d,
+      timeline: (d.timeline ?? []).filter((_, itemIndex) => itemIndex !== index),
+    }));
   };
 
   const handleSave = async () => {
@@ -517,6 +566,55 @@ export default function InvitationEditor({ initial }: { initial?: Invitation }) 
             )}
             {key === "countdown" && (
               <p className="text-xs text-gray-500">La cuenta regresiva se calcula automaticamente desde la fecha del evento.</p>
+            )}
+            {key === "timeline" && (
+              <div className="space-y-3">
+                <p className="text-xs text-gray-500">Agrega los momentos importantes de la programacion del evento.</p>
+                {(draft.timeline ?? []).map((item, index) => (
+                  <div key={`timeline-${index}`} className="space-y-2 rounded-lg border border-gray-200 bg-white p-3">
+                    <div className="grid gap-2 md:grid-cols-2">
+                      <Field label="Hora">
+                        <input
+                          className={inputCls}
+                          value={item.time}
+                          onChange={(e) => updateTimelineItem(index, "time", e.target.value)}
+                          placeholder="Ej: 7:00 AM"
+                        />
+                      </Field>
+                      <Field label="Actividad">
+                        <input
+                          className={inputCls}
+                          value={item.title}
+                          onChange={(e) => updateTimelineItem(index, "title", e.target.value)}
+                          placeholder="Ej: Toma de fotos"
+                        />
+                      </Field>
+                    </div>
+                    <Field label="Descripcion opcional">
+                      <input
+                        className={inputCls}
+                        value={item.description ?? ""}
+                        onChange={(e) => updateTimelineItem(index, "description", e.target.value)}
+                        placeholder="Ej: Sesion con familia y amigos cercanos"
+                      />
+                    </Field>
+                    <button
+                      type="button"
+                      onClick={() => removeTimelineItem(index)}
+                      className="text-xs font-medium text-red-600 hover:text-red-700"
+                    >
+                      Eliminar bloque
+                    </button>
+                  </div>
+                ))}
+                <button
+                  type="button"
+                  onClick={addTimelineItem}
+                  className="rounded-lg border border-gray-200 bg-white px-3 py-2 text-sm font-semibold hover:bg-gray-50"
+                >
+                  Agregar item al timeline
+                </button>
+              </div>
             )}
             {key === "gallery" && (
               <ImageUploader

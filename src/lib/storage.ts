@@ -62,6 +62,7 @@ export async function upsertInvitation(input: Partial<Invitation> & { title: str
     place: input.place ?? "",
     address: input.address ?? "",
     mapUrl: input.mapUrl ?? "",
+    timeline: input.timeline ?? [],
     message: input.message ?? "",
     dressCode: input.dressCode ?? "",
     musicUrl: input.musicUrl ?? "",
@@ -69,7 +70,7 @@ export async function upsertInvitation(input: Partial<Invitation> & { title: str
     theme: input.theme ?? "elegant",
     primaryColor: input.primaryColor ?? "",
     textColor: input.textColor ?? "",
-    sections: input.sections ?? ["hero", "details", "countdown", "gallery", "message", "dressCode", "map", "rsvp", "music"],
+    sections: input.sections ?? ["hero", "details", "countdown", "timeline", "gallery", "message", "dressCode", "map", "rsvp", "music"],
     createdAt: (existing as unknown as Invitation)?.createdAt ?? now,
     updatedAt: now,
   };
@@ -110,6 +111,7 @@ export async function upsertInvitationForOwner(
     place: input.place ?? "",
     address: input.address ?? "",
     mapUrl: input.mapUrl ?? "",
+    timeline: input.timeline ?? [],
     message: input.message ?? "",
     dressCode: input.dressCode ?? "",
     musicUrl: input.musicUrl ?? "",
@@ -117,7 +119,7 @@ export async function upsertInvitationForOwner(
     theme: input.theme ?? "elegant",
     primaryColor: input.primaryColor ?? "",
     textColor: input.textColor ?? "",
-    sections: input.sections ?? ["hero", "details", "countdown", "gallery", "message", "dressCode", "map", "rsvp", "music"],
+    sections: input.sections ?? ["hero", "details", "countdown", "timeline", "gallery", "message", "dressCode", "map", "rsvp", "music"],
     createdAt: (existing as unknown as Invitation)?.createdAt ?? now,
     updatedAt: now,
   };

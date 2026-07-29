@@ -1,6 +1,11 @@
 import { z } from "zod";
 
-const sectionKeySchema = z.enum(["hero", "details", "countdown", "gallery", "message", "dressCode", "map", "rsvp", "music"]);
+const sectionKeySchema = z.enum(["hero", "details", "countdown", "timeline", "gallery", "message", "dressCode", "map", "rsvp", "music"]);
+const timelineItemSchema = z.object({
+  time: z.string().max(40),
+  title: z.string().min(1).max(120),
+  description: z.string().max(240).optional(),
+});
 
 export const invitationSchema = z.object({
   id: z.string().optional(),
@@ -14,6 +19,7 @@ export const invitationSchema = z.object({
   place: z.string().max(160).optional(),
   address: z.string().max(200).optional(),
   mapUrl: z.string().max(1000).optional(),
+  timeline: z.array(timelineItemSchema).max(20).default([]),
   message: z.string().max(1000).optional(),
   dressCode: z.string().max(120).optional(),
   musicUrl: z.string().max(500).optional(),
@@ -21,7 +27,7 @@ export const invitationSchema = z.object({
   theme: z.enum(["elegant", "romantic", "modern", "floral"]).default("elegant"),
   primaryColor: z.string().max(32).optional(),
   textColor: z.string().max(32).optional(),
-  sections: z.array(sectionKeySchema).default(["hero", "details", "countdown", "gallery", "message", "dressCode", "map", "rsvp", "music"]),
+  sections: z.array(sectionKeySchema).default(["hero", "details", "countdown", "timeline", "gallery", "message", "dressCode", "map", "rsvp", "music"]),
 });
 
 export const rsvpSchema = z.object({
