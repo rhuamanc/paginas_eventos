@@ -396,6 +396,7 @@ export default function InvitationEditor({ initial }: { initial?: Invitation }) 
   const [saving, setSaving] = useState(false);
   const [draggingSection, setDraggingSection] = useState<SectionKey | null>(null);
   const [dropTargetSection, setDropTargetSection] = useState<SectionKey | null>(null);
+  const [formError, setFormError] = useState<string>("");
 
   const [draft, setDraft] = useState<DraftInvitation>(() => {
     if (!initial) {
@@ -488,13 +489,42 @@ export default function InvitationEditor({ initial }: { initial?: Invitation }) 
 
   const handleSave = async () => {
     setSaving(true);
+    setFormError("");
     try {
       const res = await fetch("/api/invitations", {
         method: "POST",
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify(draft),
       });
-      if (!res.ok) throw new Error(await res.text());
+      if (!res.ok) {
+        let errorMessage = "No se pudo guardar la pagina. Revisa los datos ingresados.";
+        try {
+          const payload = await res.json() as {
+            error?: string;
+            details?: {
+              fieldErrors?: Record<string, string[]>;
+            };
+          };
+
+          const fieldErrors = payload.details?.fieldErrors ?? {};
+          const firstFieldWithError = Object.keys(fieldErrors).find((key) => fieldErrors[key]?.length);
+
+          if (firstFieldWithError) {
+            const firstFieldError = fieldErrors[firstFieldWithError]?.[0];
+            if (firstFieldError) {
+              errorMessage = firstFieldError;
+            }
+          } else if (payload.error) {
+            errorMessage = payload.error;
+          }
+        } catch {
+          // Si no viene JSON, dejamos mensaje amigable por defecto.
+        }
+
+        setFormError(errorMessage);
+        return;
+      }
+
       const data = await res.json();
       const saved: Invitation = data.invitation ?? data;
       if (!draft.id) {
@@ -503,7 +533,7 @@ export default function InvitationEditor({ initial }: { initial?: Invitation }) 
       }
       alert("Guardado correctamente");
     } catch (err) {
-      alert("Error al guardar: " + String(err));
+      setFormError("Error de red al guardar. Intenta nuevamente.");
     } finally {
       setSaving(false);
     }
@@ -515,7 +545,7 @@ export default function InvitationEditor({ initial }: { initial?: Invitation }) 
   return (
     <div className="grid gap-4 md:grid-cols-[420px_1fr]" style={{ height: "auto" }}>
       {/* Left: controls */}
-      <aside className="overflow-y-auto rounded-2xl border border-gray-200 bg-gray-50 p-4 space-y-3 md:max-h-[calc(100vh-130px)] md:sticky md:top-4">
+      <aside className="rounded-2xl border border-gray-200 bg-gray-50 p-4 space-y-3 md:sticky md:top-4">
         {/* Theme */}
         <div className="rounded-xl border border-gray-200 bg-white p-4 space-y-3">
           <h2 className="text-xs font-semibold uppercase tracking-wider text-gray-500">Tema visual</h2>
@@ -631,13 +661,13 @@ export default function InvitationEditor({ initial }: { initial?: Invitation }) 
             {key === "details" && (
               <>
                 <Field label="Anfitriones">
-                  <input className={inputCls} value={draft.hostNames ?? ""} onChange={(e) => set("hostNames", e.target.value)} placeholder="Ana Garcia & Carlos Lopez" />
+                  <input className={inputCls} maxLength={450} value={draft.hostNames ?? ""} onChange={(e) => set("hostNames", e.target.value)} placeholder="Ana Garcia & Carlos Lopez" />
                 </Field>
                 <Field label="Fecha y hora">
                   <input type="datetime-local" className={inputCls} value={draft.dateTime ?? ""} onChange={(e) => set("dateTime", e.target.value)} />
                 </Field>
                 <Field label="Nombre del lugar">
-                  <input className={inputCls} value={draft.place ?? ""} onChange={(e) => set("place", e.target.value)} placeholder="Hotel Marriott Lima" />
+                  <input className={inputCls} maxLength={450} value={draft.place ?? ""} onChange={(e) => set("place", e.target.value)} placeholder="Hotel Marriott Lima" />
                 </Field>
                 <Field label="Direccion">
                   <input className={inputCls} value={draft.address ?? ""} onChange={(e) => set("address", e.target.value)} placeholder="Av. Principal 123, Lima" />
@@ -656,6 +686,7 @@ export default function InvitationEditor({ initial }: { initial?: Invitation }) 
                       <Field label="Hora">
                         <input
                           className={inputCls}
+                          maxLength={40}
                           value={item.time}
                           onChange={(e) => updateTimelineItem(index, "time", e.target.value)}
                           placeholder="Ej: 7:00 AM"
@@ -664,6 +695,7 @@ export default function InvitationEditor({ initial }: { initial?: Invitation }) 
                       <Field label="Actividad">
                         <input
                           className={inputCls}
+                          maxLength={120}
                           value={item.title}
                           onChange={(e) => updateTimelineItem(index, "title", e.target.value)}
                           placeholder="Ej: Toma de fotos"
@@ -673,6 +705,7 @@ export default function InvitationEditor({ initial }: { initial?: Invitation }) 
                     <Field label="Descripcion opcional">
                       <input
                         className={inputCls}
+                        maxLength={240}
                         value={item.description ?? ""}
                         onChange={(e) => updateTimelineItem(index, "description", e.target.value)}
                         placeholder="Ej: Sesion con familia y amigos cercanos"
@@ -743,6 +776,11 @@ export default function InvitationEditor({ initial }: { initial?: Invitation }) 
 
         {/* Save */}
         <div className="rounded-xl border border-gray-200 bg-white p-4 space-y-3">
+          {formError ? (
+            <p className="rounded-lg border border-red-200 bg-red-50 px-3 py-2 text-xs text-red-700">
+              {formError}
+            </p>
+          ) : null}
           <button
             type="button"
             onClick={handleSave}
