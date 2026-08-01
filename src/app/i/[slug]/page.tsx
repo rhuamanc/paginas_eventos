@@ -3,7 +3,7 @@ import { getInvitationBySlug } from "@/lib/storage";
 import Countdown from "@/components/Countdown";
 import RsvpForm from "@/components/RsvpForm";
 import CommentsSection from "@/components/CommentsSection";
-import type { Invitation, SectionKey } from "@/types/invitation";
+import type { Invitation, SectionKey, BulletStyle } from "@/types/invitation";
 
 export const dynamic = "force-dynamic";
 
@@ -35,6 +35,20 @@ function parsePeopleList(text?: string) {
     .filter(Boolean);
 }
 
+function getBulletPrefix(style?: BulletStyle) {
+  switch (style) {
+    case "circle":
+      return "◦";
+    case "square":
+      return "▪";
+    case "dash":
+      return "—";
+    case "dot":
+    default:
+      return "•";
+  }
+}
+
 export default async function PublicInvitationPage({ params }: Props) {
   const { slug } = await params;
   const inv: Invitation | null = await getInvitationBySlug(slug);
@@ -44,7 +58,7 @@ export default async function PublicInvitationPage({ params }: Props) {
   const accent = inv.primaryColor || theme.accent;
   const sectionOrder: SectionKey[] = inv.sectionOrder?.length
     ? inv.sectionOrder
-    : ["hero", "details", "countdown", "timeline", "family", "parish", "reception", "gallery", "message", "dressCode", "rsvp", "music"];
+    : ["hero", "details", "countdown", "timeline", "parents", "godparents", "witnesses", "parish", "reception", "gallery", "message", "dressCode", "rsvp", "music"];
   const enabledSections: SectionKey[] = inv.sections?.length
     ? inv.sections
     : sectionOrder;
@@ -129,48 +143,56 @@ export default async function PublicInvitationPage({ params }: Props) {
               </section>
             );
 
-          case "family": {
+          case "parents": {
             const parents = parsePeopleList(inv.parents);
-            const godparents = parsePeopleList(inv.godparents);
-            const witnesses = parsePeopleList(inv.witnesses);
-            if (!parents.length && !godparents.length && !witnesses.length) return null;
+            if (!parents.length) return null;
+            const bullet = getBulletPrefix(inv.parentsBulletStyle);
 
             return (
-              <section key="family" className="py-14 px-6" style={{ background: "var(--th-card)" }}>
-                <p className="text-xs uppercase tracking-widest opacity-60 text-center mb-6">Familia y acompañantes</p>
-                <div className="mx-auto grid max-w-4xl gap-4 md:grid-cols-3">
-                  <div className="rounded-2xl bg-white/50 p-4">
-                    <p className="mb-3 text-sm font-semibold uppercase tracking-wide">Padres</p>
-                    {parents.length ? (
-                      <ul className="space-y-1 text-sm">
-                        {parents.map((item) => (
-                          <li key={item}>• {item}</li>
-                        ))}
-                      </ul>
-                    ) : <p className="text-sm opacity-60">Sin datos</p>}
-                  </div>
+              <section key="parents" className="py-14 px-6" style={{ background: "var(--th-card)" }}>
+                <p className="text-xs uppercase tracking-widest opacity-60 text-center mb-6">Padres</p>
+                <div className="mx-auto max-w-3xl rounded-2xl bg-white/50 p-4">
+                  <ul className="space-y-1 text-sm">
+                    {parents.map((item) => (
+                      <li key={item}>{bullet} {item}</li>
+                    ))}
+                  </ul>
+                </div>
+              </section>
+            );
+          }
 
-                  <div className="rounded-2xl bg-white/50 p-4">
-                    <p className="mb-3 text-sm font-semibold uppercase tracking-wide">Padrinos</p>
-                    {godparents.length ? (
-                      <ul className="space-y-1 text-sm">
-                        {godparents.map((item) => (
-                          <li key={item}>• {item}</li>
-                        ))}
-                      </ul>
-                    ) : <p className="text-sm opacity-60">Sin datos</p>}
-                  </div>
+          case "godparents": {
+            const godparents = parsePeopleList(inv.godparents);
+            if (!godparents.length) return null;
+            const bullet = getBulletPrefix(inv.godparentsBulletStyle);
+            return (
+              <section key="godparents" className="py-14 px-6" style={{ background: "var(--th-card)" }}>
+                <p className="text-xs uppercase tracking-widest opacity-60 text-center mb-6">Padrinos</p>
+                <div className="mx-auto max-w-3xl rounded-2xl bg-white/50 p-4">
+                  <ul className="space-y-1 text-sm">
+                    {godparents.map((item) => (
+                      <li key={item}>{bullet} {item}</li>
+                    ))}
+                  </ul>
+                </div>
+              </section>
+            );
+          }
 
-                  <div className="rounded-2xl bg-white/50 p-4">
-                    <p className="mb-3 text-sm font-semibold uppercase tracking-wide">Testigos</p>
-                    {witnesses.length ? (
-                      <ul className="space-y-1 text-sm">
-                        {witnesses.map((item) => (
-                          <li key={item}>• {item}</li>
-                        ))}
-                      </ul>
-                    ) : <p className="text-sm opacity-60">Sin datos</p>}
-                  </div>
+          case "witnesses": {
+            const witnesses = parsePeopleList(inv.witnesses);
+            if (!witnesses.length) return null;
+            const bullet = getBulletPrefix(inv.witnessesBulletStyle);
+            return (
+              <section key="witnesses" className="py-14 px-6" style={{ background: "var(--th-card)" }}>
+                <p className="text-xs uppercase tracking-widest opacity-60 text-center mb-6">Testigos</p>
+                <div className="mx-auto max-w-3xl rounded-2xl bg-white/50 p-4">
+                  <ul className="space-y-1 text-sm">
+                    {witnesses.map((item) => (
+                      <li key={item}>{bullet} {item}</li>
+                    ))}
+                  </ul>
                 </div>
               </section>
             );

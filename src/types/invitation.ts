@@ -5,12 +5,15 @@ export type TimelineItem = {
   title: string;
   description?: string;
 };
+export type BulletStyle = "dot" | "circle" | "square" | "dash";
 export type SectionKey =
   | "hero"
   | "details"
   | "countdown"
   | "timeline"
-  | "family"
+  | "parents"
+  | "godparents"
+  | "witnesses"
   | "parish"
   | "reception"
   | "gallery"
@@ -35,10 +38,13 @@ export type Invitation = {
   address?: string;
   // Timeline
   timeline?: TimelineItem[];
-  // Family
+  // Parents / godparents / witnesses
   parents?: string;
+  parentsBulletStyle?: BulletStyle;
   godparents?: string;
+  godparentsBulletStyle?: BulletStyle;
   witnesses?: string;
+  witnessesBulletStyle?: BulletStyle;
   // Parish
   parishName?: string;
   parishTime?: string;

@@ -1,6 +1,7 @@
 import { z } from "zod";
 
-const sectionKeySchema = z.enum(["hero", "details", "countdown", "timeline", "family", "parish", "reception", "gallery", "message", "dressCode", "rsvp", "music"]);
+const sectionKeySchema = z.enum(["hero", "details", "countdown", "timeline", "parents", "godparents", "witnesses", "parish", "reception", "gallery", "message", "dressCode", "rsvp", "music"]);
+const bulletStyleSchema = z.enum(["dot", "circle", "square", "dash"]);
 const timelineItemSchema = z.object({
   time: z.string().min(1, "La hora del timeline es obligatoria.").max(40, "La hora del timeline no puede superar 40 caracteres."),
   title: z.string().min(1, "La actividad del timeline es obligatoria.").max(120, "La actividad del timeline no puede superar 120 caracteres."),
@@ -20,8 +21,11 @@ export const invitationSchema = z.object({
   address: z.string().max(200, "Direccion no puede superar 200 caracteres.").optional(),
   timeline: z.array(timelineItemSchema).max(20).default([]),
   parents: z.string().max(450, "Padres no puede superar 450 caracteres.").optional(),
+  parentsBulletStyle: bulletStyleSchema.default("dot"),
   godparents: z.string().max(450, "Padrinos no puede superar 450 caracteres.").optional(),
+  godparentsBulletStyle: bulletStyleSchema.default("dot"),
   witnesses: z.string().max(450, "Testigos no puede superar 450 caracteres.").optional(),
+  witnessesBulletStyle: bulletStyleSchema.default("dot"),
   parishName: z.string().max(450, "Nombre de la parroquia no puede superar 450 caracteres.").optional(),
   parishTime: z.string().max(40, "Hora de la parroquia no puede superar 40 caracteres.").optional(),
   parishMapUrl: z.string().max(1000, "El mapa de la parroquia es demasiado largo.").optional(),
@@ -35,8 +39,8 @@ export const invitationSchema = z.object({
   theme: z.enum(["elegant", "romantic", "modern", "floral"]).default("elegant"),
   primaryColor: z.string().max(32, "Color principal invalido.").optional(),
   textColor: z.string().max(32, "Color de texto invalido.").optional(),
-  sections: z.array(sectionKeySchema).default(["hero", "details", "countdown", "timeline", "family", "parish", "reception", "gallery", "message", "dressCode", "rsvp", "music"]),
-  sectionOrder: z.array(sectionKeySchema).default(["hero", "details", "countdown", "timeline", "family", "parish", "reception", "gallery", "message", "dressCode", "rsvp", "music"]),
+  sections: z.array(sectionKeySchema).default(["hero", "details", "countdown", "timeline", "parents", "godparents", "witnesses", "parish", "reception", "gallery", "message", "dressCode", "rsvp", "music"]),
+  sectionOrder: z.array(sectionKeySchema).default(["hero", "details", "countdown", "timeline", "parents", "godparents", "witnesses", "parish", "reception", "gallery", "message", "dressCode", "rsvp", "music"]),
 });
 
 export const rsvpSchema = z.object({

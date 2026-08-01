@@ -5,7 +5,7 @@ import { useRouter } from "next/navigation";
 import dynamic from "next/dynamic";
 import ImageUploader from "./ImageUploader";
 import LoadingSpinner from "./LoadingSpinner";
-import type { Invitation, EventType, ThemeStyle, SectionKey, TimelineItem } from "@/types/invitation";
+import type { Invitation, EventType, ThemeStyle, SectionKey, TimelineItem, BulletStyle } from "@/types/invitation";
 
 const MapPicker = dynamic(() => import("./MapPicker"), {
   ssr: false,
@@ -18,7 +18,7 @@ type DraftInvitation = Omit<Invitation, "id" | "slug" | "ownerId" | "createdAt" 
 };
 
 const ALL_SECTIONS: SectionKey[] = [
-  "hero", "details", "countdown", "timeline", "family", "parish", "reception", "gallery", "message", "dressCode", "rsvp", "music",
+  "hero", "details", "countdown", "timeline", "parents", "godparents", "witnesses", "parish", "reception", "gallery", "message", "dressCode", "rsvp", "music",
 ];
 
 const SECTION_LABELS: Record<SectionKey, string> = {
@@ -26,7 +26,9 @@ const SECTION_LABELS: Record<SectionKey, string> = {
   details: "Fecha, hora y lugar",
   countdown: "Cuenta regresiva",
   timeline: "Timeline / programacion",
-  family: "Padres / padrinos / testigos",
+  parents: "Padres",
+  godparents: "Padrinos",
+  witnesses: "Testigos",
   parish: "Parroquia",
   reception: "Salon de recepciones",
   gallery: "Galeria de fotos",
@@ -49,6 +51,13 @@ const EVENT_LABELS: Record<EventType, string> = {
   "baby-shower": "Baby Shower",
   graduacion: "Graduación",
   otro: "Otro evento",
+};
+
+const BULLET_LABELS: Record<BulletStyle, string> = {
+  dot: "Punto (•)",
+  circle: "Circulo (◦)",
+  square: "Cuadrado (▪)",
+  dash: "Guion (—)",
 };
 
 const DEFAULT_GALLERY = [
@@ -78,8 +87,11 @@ function getDefaultDraft(): DraftInvitation {
       { time: "9:00 AM", title: "Ceremonia", description: "Inicio del momento principal" },
     ],
     parents: "Padres de la novia\nPadres del novio",
+    parentsBulletStyle: "dot",
     godparents: "Padrinos de ceremonia",
+    godparentsBulletStyle: "dot",
     witnesses: "Testigo 1\nTestigo 2",
+    witnessesBulletStyle: "dot",
     parishName: "Parroquia San Pedro",
     parishTime: "11:00 AM",
     parishMapUrl: "https://maps.google.com/maps?q=-12.0464,-77.0428&output=embed&z=16",
@@ -120,6 +132,20 @@ function parsePeopleList(text?: string) {
     .filter(Boolean);
 }
 
+function getBulletPrefix(style?: BulletStyle) {
+  switch (style) {
+    case "circle":
+      return "◦";
+    case "square":
+      return "▪";
+    case "dash":
+      return "—";
+    case "dot":
+    default:
+      return "•";
+  }
+}
+
 function applySectionDefaults(draft: DraftInvitation, key: SectionKey): DraftInvitation {
   const defaults = getDefaultDraft();
 
@@ -153,12 +179,25 @@ function applySectionDefaults(draft: DraftInvitation, key: SectionKey): DraftInv
         timeline: draft.timeline?.length ? draft.timeline : defaults.timeline,
       };
 
-    case "family":
+    case "parents":
       return {
         ...draft,
         parents: draft.parents?.trim() ? draft.parents : defaults.parents,
+        parentsBulletStyle: draft.parentsBulletStyle ?? defaults.parentsBulletStyle,
+      };
+
+    case "godparents":
+      return {
+        ...draft,
         godparents: draft.godparents?.trim() ? draft.godparents : defaults.godparents,
+        godparentsBulletStyle: draft.godparentsBulletStyle ?? defaults.godparentsBulletStyle,
+      };
+
+    case "witnesses":
+      return {
+        ...draft,
         witnesses: draft.witnesses?.trim() ? draft.witnesses : defaults.witnesses,
+        witnessesBulletStyle: draft.witnessesBulletStyle ?? defaults.witnessesBulletStyle,
       };
 
     case "parish":
@@ -329,29 +368,43 @@ function PagePreview({ draft }: { draft: DraftInvitation }) {
               </section>
             );
 
-          case "family": {
-            const parents = parsePeopleList(draft.parents);
-            const godparents = parsePeopleList(draft.godparents);
-            const witnesses = parsePeopleList(draft.witnesses);
-
-            if (!parents.length && !godparents.length && !witnesses.length) return null;
-
+          case "parents": {
+            const items = parsePeopleList(draft.parents);
+            if (!items.length) return null;
+            const bullet = getBulletPrefix(draft.parentsBulletStyle);
             return (
-              <section key="family" className="py-8 px-6" style={{ background: "var(--th-card)" }}>
-                <p className="text-xs uppercase tracking-widest opacity-60 text-center mb-4">Familia y acompañantes</p>
-                <div className="grid gap-3 md:grid-cols-3">
-                  <div className="rounded-xl bg-white/10 p-3">
-                    <p className="mb-2 text-xs font-semibold uppercase">Padres</p>
-                    {parents.length ? parents.map((item) => <p key={item} className="text-sm">• {item}</p>) : <p className="text-xs opacity-70">Sin datos</p>}
-                  </div>
-                  <div className="rounded-xl bg-white/10 p-3">
-                    <p className="mb-2 text-xs font-semibold uppercase">Padrinos</p>
-                    {godparents.length ? godparents.map((item) => <p key={item} className="text-sm">• {item}</p>) : <p className="text-xs opacity-70">Sin datos</p>}
-                  </div>
-                  <div className="rounded-xl bg-white/10 p-3">
-                    <p className="mb-2 text-xs font-semibold uppercase">Testigos</p>
-                    {witnesses.length ? witnesses.map((item) => <p key={item} className="text-sm">• {item}</p>) : <p className="text-xs opacity-70">Sin datos</p>}
-                  </div>
+              <section key="parents" className="py-8 px-6" style={{ background: "var(--th-card)" }}>
+                <p className="text-xs uppercase tracking-widest opacity-60 text-center mb-4">Padres</p>
+                <div className="mx-auto max-w-xl rounded-xl bg-white/10 p-4">
+                  {items.map((item) => <p key={item} className="text-sm">{bullet} {item}</p>)}
+                </div>
+              </section>
+            );
+          }
+
+          case "godparents": {
+            const items = parsePeopleList(draft.godparents);
+            if (!items.length) return null;
+            const bullet = getBulletPrefix(draft.godparentsBulletStyle);
+            return (
+              <section key="godparents" className="py-8 px-6" style={{ background: "var(--th-card)" }}>
+                <p className="text-xs uppercase tracking-widest opacity-60 text-center mb-4">Padrinos</p>
+                <div className="mx-auto max-w-xl rounded-xl bg-white/10 p-4">
+                  {items.map((item) => <p key={item} className="text-sm">{bullet} {item}</p>)}
+                </div>
+              </section>
+            );
+          }
+
+          case "witnesses": {
+            const items = parsePeopleList(draft.witnesses);
+            if (!items.length) return null;
+            const bullet = getBulletPrefix(draft.witnessesBulletStyle);
+            return (
+              <section key="witnesses" className="py-8 px-6" style={{ background: "var(--th-card)" }}>
+                <p className="text-xs uppercase tracking-widest opacity-60 text-center mb-4">Testigos</p>
+                <div className="mx-auto max-w-xl rounded-xl bg-white/10 p-4">
+                  {items.map((item) => <p key={item} className="text-sm">{bullet} {item}</p>)}
                 </div>
               </section>
             );
@@ -575,8 +628,11 @@ export default function InvitationEditor({ initial }: { initial?: Invitation }) 
       address: initial.address ?? "",
       timeline: initial.timeline ?? [],
       parents: initial.parents ?? "",
+      parentsBulletStyle: initial.parentsBulletStyle ?? "dot",
       godparents: initial.godparents ?? "",
+      godparentsBulletStyle: initial.godparentsBulletStyle ?? "dot",
       witnesses: initial.witnesses ?? "",
+      witnessesBulletStyle: initial.witnessesBulletStyle ?? "dot",
       parishName: initial.parishName ?? "",
       parishTime: initial.parishTime ?? "",
       parishMapUrl: initial.parishMapUrl ?? "",
@@ -914,8 +970,19 @@ export default function InvitationEditor({ initial }: { initial?: Invitation }) 
                 </button>
               </div>
             )}
-            {key === "family" && (
+            {key === "parents" && (
               <div className="space-y-3">
+                <Field label="Tipo de viñeta">
+                  <select
+                    className={inputCls}
+                    value={draft.parentsBulletStyle ?? "dot"}
+                    onChange={(e) => set("parentsBulletStyle", e.target.value as BulletStyle)}
+                  >
+                    {(Object.keys(BULLET_LABELS) as BulletStyle[]).map((style) => (
+                      <option key={style} value={style}>{BULLET_LABELS[style]}</option>
+                    ))}
+                  </select>
+                </Field>
                 <Field label="Padres (un nombre por linea)">
                   <textarea
                     className={`${inputCls} h-20 resize-none`}
@@ -925,6 +992,21 @@ export default function InvitationEditor({ initial }: { initial?: Invitation }) 
                     placeholder={`Padre de la novia\nMadre de la novia\nPadre del novio\nMadre del novio`}
                   />
                 </Field>
+              </div>
+            )}
+            {key === "godparents" && (
+              <div className="space-y-3">
+                <Field label="Tipo de viñeta">
+                  <select
+                    className={inputCls}
+                    value={draft.godparentsBulletStyle ?? "dot"}
+                    onChange={(e) => set("godparentsBulletStyle", e.target.value as BulletStyle)}
+                  >
+                    {(Object.keys(BULLET_LABELS) as BulletStyle[]).map((style) => (
+                      <option key={style} value={style}>{BULLET_LABELS[style]}</option>
+                    ))}
+                  </select>
+                </Field>
                 <Field label="Padrinos (un nombre por linea)">
                   <textarea
                     className={`${inputCls} h-20 resize-none`}
@@ -933,6 +1015,21 @@ export default function InvitationEditor({ initial }: { initial?: Invitation }) 
                     onChange={(e) => set("godparents", e.target.value)}
                     placeholder={`Padrino 1\nPadrino 2`}
                   />
+                </Field>
+              </div>
+            )}
+            {key === "witnesses" && (
+              <div className="space-y-3">
+                <Field label="Tipo de viñeta">
+                  <select
+                    className={inputCls}
+                    value={draft.witnessesBulletStyle ?? "dot"}
+                    onChange={(e) => set("witnessesBulletStyle", e.target.value as BulletStyle)}
+                  >
+                    {(Object.keys(BULLET_LABELS) as BulletStyle[]).map((style) => (
+                      <option key={style} value={style}>{BULLET_LABELS[style]}</option>
+                    ))}
+                  </select>
                 </Field>
                 <Field label="Testigos (un nombre por linea)">
                   <textarea

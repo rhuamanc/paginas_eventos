@@ -1,7 +1,7 @@
 import mongoose, { Schema, model, models } from "mongoose";
 import type { AppUser, Invitation, InvitationComment, RSVP } from "@/types/invitation";
 
-const SECTION_KEYS = ["hero", "details", "countdown", "timeline", "family", "parish", "reception", "gallery", "message", "dressCode", "rsvp", "music"];
+const SECTION_KEYS = ["hero", "details", "countdown", "timeline", "parents", "godparents", "witnesses", "parish", "reception", "gallery", "message", "dressCode", "rsvp", "music"];
 
 const InvitationSchema = new Schema<Invitation>(
   {
@@ -18,8 +18,11 @@ const InvitationSchema = new Schema<Invitation>(
     address: String,
     timeline: [{ time: String, title: String, description: String }],
     parents: String,
+    parentsBulletStyle: { type: String, enum: ["dot", "circle", "square", "dash"], default: "dot" },
     godparents: String,
+    godparentsBulletStyle: { type: String, enum: ["dot", "circle", "square", "dash"], default: "dot" },
     witnesses: String,
+    witnessesBulletStyle: { type: String, enum: ["dot", "circle", "square", "dash"], default: "dot" },
     parishName: String,
     parishTime: String,
     parishMapUrl: String,
@@ -92,8 +95,11 @@ export const InvitationModel =
       if (!existing.schema.path("parents")) {
         existing.schema.add({
           parents: String,
+          parentsBulletStyle: { type: String, enum: ["dot", "circle", "square", "dash"], default: "dot" },
           godparents: String,
+          godparentsBulletStyle: { type: String, enum: ["dot", "circle", "square", "dash"], default: "dot" },
           witnesses: String,
+          witnessesBulletStyle: { type: String, enum: ["dot", "circle", "square", "dash"], default: "dot" },
           parishName: String,
           parishTime: String,
           parishMapUrl: String,
