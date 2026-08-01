@@ -266,7 +266,7 @@ function PagePreview({ draft }: { draft: DraftInvitation }) {
               >
                 <p className="text-xs uppercase tracking-widest mb-2 opacity-70">{EVENT_LABELS[draft.eventType]}</p>
                 <h1 className="text-3xl font-bold mb-2">{draft.title || "Titulo del evento"}</h1>
-                {draft.subtitle && <p className="text-base opacity-80 max-w-xs">{draft.subtitle}</p>}
+                {draft.subtitle && <p className="text-base opacity-80 max-w-xs whitespace-pre-line">{draft.subtitle}</p>}
               </section>
             );
 
@@ -825,7 +825,16 @@ export default function InvitationEditor({ initial }: { initial?: Invitation }) 
                   <input className={inputCls} value={draft.title} onChange={(e) => set("title", e.target.value)} placeholder="Ej: La boda de Ana y Carlos" />
                 </Field>
                 <Field label="Subtitulo">
-                  <input className={inputCls} value={draft.subtitle ?? ""} onChange={(e) => set("subtitle", e.target.value)} placeholder="Un mensaje de bienvenida" />
+                  <div className="space-y-1">
+                    <textarea
+                      className={`${inputCls} min-h-[92px] resize-y rounded-xl`}
+                      maxLength={200}
+                      value={draft.subtitle ?? ""}
+                      onChange={(e) => set("subtitle", e.target.value)}
+                      placeholder={`Un mensaje de bienvenida\ncon más de una línea`}
+                    />
+                    <p className="text-[11px] text-gray-500">Puedes usar Enter para saltos de línea.</p>
+                  </div>
                 </Field>
                 <ImageUploader
                   label="Imagen de portada"
