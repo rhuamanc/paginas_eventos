@@ -10,10 +10,12 @@ export type SectionKey =
   | "details"
   | "countdown"
   | "timeline"
+  | "family"
+  | "parish"
+  | "reception"
   | "gallery"
   | "message"
   | "dressCode"
-  | "map"
   | "rsvp"
   | "music";
 
@@ -31,10 +33,20 @@ export type Invitation = {
   dateTime?: string;
   place?: string;
   address?: string;
-  // Map
-  mapUrl?: string;
   // Timeline
   timeline?: TimelineItem[];
+  // Family
+  parents?: string;
+  godparents?: string;
+  witnesses?: string;
+  // Parish
+  parishName?: string;
+  parishTime?: string;
+  parishMapUrl?: string;
+  // Reception
+  receptionName?: string;
+  receptionTime?: string;
+  receptionMapUrl?: string;
   // Message
   message?: string;
   // Gallery

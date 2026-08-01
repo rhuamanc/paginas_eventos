@@ -18,7 +18,7 @@ type DraftInvitation = Omit<Invitation, "id" | "slug" | "ownerId" | "createdAt" 
 };
 
 const ALL_SECTIONS: SectionKey[] = [
-  "hero", "details", "countdown", "timeline", "gallery", "message", "dressCode", "map", "rsvp", "music",
+  "hero", "details", "countdown", "timeline", "family", "parish", "reception", "gallery", "message", "dressCode", "rsvp", "music",
 ];
 
 const SECTION_LABELS: Record<SectionKey, string> = {
@@ -26,10 +26,12 @@ const SECTION_LABELS: Record<SectionKey, string> = {
   details: "Fecha, hora y lugar",
   countdown: "Cuenta regresiva",
   timeline: "Timeline / programacion",
+  family: "Padres / padrinos / testigos",
+  parish: "Parroquia",
+  reception: "Salon de recepciones",
   gallery: "Galeria de fotos",
   message: "Mensaje personalizado",
   dressCode: "Dress code",
-  map: "Mapa / direccion",
   rsvp: "Formulario RSVP",
   music: "Musica de fondo",
 };
@@ -70,12 +72,20 @@ function getDefaultDraft(): DraftInvitation {
     dateTime: "2026-12-19T18:00",
     place: "Hacienda Villa Jardin",
     address: "Av. Primavera 1234, Lima",
-    mapUrl: "https://www.google.com/maps?q=Lima+Peru&output=embed",
     timeline: [
       { time: "7:00 AM", title: "Toma de fotos", description: "Sesión con familiares y padrinos" },
       { time: "8:00 AM", title: "Recepcion de invitados", description: "Bienvenida y coctel inicial" },
       { time: "9:00 AM", title: "Ceremonia", description: "Inicio del momento principal" },
     ],
+    parents: "Padres de la novia\nPadres del novio",
+    godparents: "Padrinos de ceremonia",
+    witnesses: "Testigo 1\nTestigo 2",
+    parishName: "Parroquia San Pedro",
+    parishTime: "11:00 AM",
+    parishMapUrl: "https://maps.google.com/maps?q=-12.0464,-77.0428&output=embed&z=16",
+    receptionName: "Salon Villa Dorada",
+    receptionTime: "1:00 PM",
+    receptionMapUrl: "https://maps.google.com/maps?q=-12.0505,-77.0332&output=embed&z=16",
     message: "Gracias por acompanarnos en el inicio de esta nueva etapa. Tu presencia hara este momento aun mas inolvidable.",
     gallery: DEFAULT_GALLERY,
     dressCode: "Formal elegante",
@@ -93,6 +103,21 @@ function moveItem<T>(items: T[], fromIndex: number, toIndex: number) {
   const [moved] = next.splice(fromIndex, 1);
   next.splice(toIndex, 0, moved);
   return next;
+}
+
+function normalizeSectionOrder(sections?: SectionKey[]) {
+  const source = sections ?? [];
+  const valid = ALL_SECTIONS.filter((item) => source.includes(item));
+  const missing = ALL_SECTIONS.filter((item) => !valid.includes(item));
+  return [...valid, ...missing];
+}
+
+function parsePeopleList(text?: string) {
+  if (!text) return [];
+  return text
+    .split(/\r?\n/)
+    .map((line) => line.trim())
+    .filter(Boolean);
 }
 
 function formatDate(iso: string) {
@@ -217,6 +242,64 @@ function PagePreview({ draft }: { draft: DraftInvitation }) {
               </section>
             );
 
+          case "family": {
+            const parents = parsePeopleList(draft.parents);
+            const godparents = parsePeopleList(draft.godparents);
+            const witnesses = parsePeopleList(draft.witnesses);
+
+            if (!parents.length && !godparents.length && !witnesses.length) return null;
+
+            return (
+              <section key="family" className="py-8 px-6" style={{ background: "var(--th-card)" }}>
+                <p className="text-xs uppercase tracking-widest opacity-60 text-center mb-4">Familia y acompañantes</p>
+                <div className="grid gap-3 md:grid-cols-3">
+                  <div className="rounded-xl bg-white/10 p-3">
+                    <p className="mb-2 text-xs font-semibold uppercase">Padres</p>
+                    {parents.length ? parents.map((item) => <p key={item} className="text-sm">• {item}</p>) : <p className="text-xs opacity-70">Sin datos</p>}
+                  </div>
+                  <div className="rounded-xl bg-white/10 p-3">
+                    <p className="mb-2 text-xs font-semibold uppercase">Padrinos</p>
+                    {godparents.length ? godparents.map((item) => <p key={item} className="text-sm">• {item}</p>) : <p className="text-xs opacity-70">Sin datos</p>}
+                  </div>
+                  <div className="rounded-xl bg-white/10 p-3">
+                    <p className="mb-2 text-xs font-semibold uppercase">Testigos</p>
+                    {witnesses.length ? witnesses.map((item) => <p key={item} className="text-sm">• {item}</p>) : <p className="text-xs opacity-70">Sin datos</p>}
+                  </div>
+                </div>
+              </section>
+            );
+          }
+
+          case "parish":
+            if (!draft.parishName && !draft.parishTime && !draft.parishMapUrl) return null;
+            return (
+              <section key="parish" className="py-6 px-6">
+                <p className="text-xs uppercase tracking-widest opacity-60 text-center mb-2">Parroquia</p>
+                {draft.parishName ? <p className="text-center text-base font-semibold">{draft.parishName}</p> : null}
+                {draft.parishTime ? <p className="text-center text-xs opacity-70 mt-1">Hora: {draft.parishTime}</p> : null}
+                {draft.parishMapUrl ? (
+                  <div className="rounded-xl overflow-hidden w-full mt-3" style={{ height: 150, background: "var(--th-card)" }}>
+                    <iframe src={draft.parishMapUrl} className="w-full h-full border-0" title="Mapa de parroquia" />
+                  </div>
+                ) : null}
+              </section>
+            );
+
+          case "reception":
+            if (!draft.receptionName && !draft.receptionTime && !draft.receptionMapUrl) return null;
+            return (
+              <section key="reception" className="py-6 px-6" style={{ background: "var(--th-card)" }}>
+                <p className="text-xs uppercase tracking-widest opacity-60 text-center mb-2">Salon de recepciones</p>
+                {draft.receptionName ? <p className="text-center text-base font-semibold">{draft.receptionName}</p> : null}
+                {draft.receptionTime ? <p className="text-center text-xs opacity-70 mt-1">Hora: {draft.receptionTime}</p> : null}
+                {draft.receptionMapUrl ? (
+                  <div className="rounded-xl overflow-hidden w-full mt-3" style={{ height: 150, background: "var(--th-bg)" }}>
+                    <iframe src={draft.receptionMapUrl} className="w-full h-full border-0" title="Mapa de salon" />
+                  </div>
+                ) : null}
+              </section>
+            );
+
           case "gallery":
             if (!activeGallery.length) return null;
             return (
@@ -249,17 +332,6 @@ function PagePreview({ draft }: { draft: DraftInvitation }) {
               <section key="dressCode" className="py-6 px-6 text-center" style={{ background: "var(--th-card)" }}>
                 <p className="text-xs uppercase tracking-widest opacity-60 mb-1">Dress Code</p>
                 <p className="text-base font-semibold">{draft.dressCode}</p>
-              </section>
-            );
-
-          case "map":
-            if (!draft.mapUrl) return null;
-            return (
-              <section key="map" className="py-6 px-6">
-                <p className="text-xs uppercase tracking-widest opacity-60 text-center mb-3">Ubicacion</p>
-                <div className="rounded-xl overflow-hidden w-full" style={{ height: 150, background: "var(--th-card)" }}>
-                  <iframe src={draft.mapUrl} className="w-full h-full border-0" title="Mapa" />
-                </div>
               </section>
             );
 
@@ -414,8 +486,16 @@ export default function InvitationEditor({ initial }: { initial?: Invitation }) 
       dateTime: initial.dateTime ?? "",
       place: initial.place ?? "",
       address: initial.address ?? "",
-      mapUrl: initial.mapUrl ?? "",
       timeline: initial.timeline ?? [],
+      parents: initial.parents ?? "",
+      godparents: initial.godparents ?? "",
+      witnesses: initial.witnesses ?? "",
+      parishName: initial.parishName ?? "",
+      parishTime: initial.parishTime ?? "",
+      parishMapUrl: initial.parishMapUrl ?? "",
+      receptionName: initial.receptionName ?? "",
+      receptionTime: initial.receptionTime ?? "",
+      receptionMapUrl: initial.receptionMapUrl ?? "",
       message: initial.message ?? "",
       gallery: initial.gallery ?? [],
       dressCode: initial.dressCode ?? "",
@@ -423,8 +503,8 @@ export default function InvitationEditor({ initial }: { initial?: Invitation }) 
       theme: initial.theme ?? "elegant",
       primaryColor: initial.primaryColor ?? "",
       textColor: initial.textColor ?? "",
-      sections: initial.sections ?? [...ALL_SECTIONS],
-      sectionOrder: initial.sectionOrder ?? initial.sections ?? [...ALL_SECTIONS],
+      sections: (initial.sections ?? [...ALL_SECTIONS]).filter((section) => ALL_SECTIONS.includes(section)),
+      sectionOrder: normalizeSectionOrder(initial.sectionOrder ?? initial.sections),
     };
   });
 
@@ -729,6 +809,69 @@ export default function InvitationEditor({ initial }: { initial?: Invitation }) 
                 </button>
               </div>
             )}
+            {key === "family" && (
+              <div className="space-y-3">
+                <Field label="Padres (un nombre por linea)">
+                  <textarea
+                    className={`${inputCls} h-20 resize-none`}
+                    maxLength={450}
+                    value={draft.parents ?? ""}
+                    onChange={(e) => set("parents", e.target.value)}
+                    placeholder={`Padre de la novia\nMadre de la novia\nPadre del novio\nMadre del novio`}
+                  />
+                </Field>
+                <Field label="Padrinos (un nombre por linea)">
+                  <textarea
+                    className={`${inputCls} h-20 resize-none`}
+                    maxLength={450}
+                    value={draft.godparents ?? ""}
+                    onChange={(e) => set("godparents", e.target.value)}
+                    placeholder={`Padrino 1\nPadrino 2`}
+                  />
+                </Field>
+                <Field label="Testigos (un nombre por linea)">
+                  <textarea
+                    className={`${inputCls} h-20 resize-none`}
+                    maxLength={450}
+                    value={draft.witnesses ?? ""}
+                    onChange={(e) => set("witnesses", e.target.value)}
+                    placeholder={`Testigo 1\nTestigo 2`}
+                  />
+                </Field>
+              </div>
+            )}
+            {key === "parish" && (
+              <div className="space-y-3">
+                <Field label="Nombre de la parroquia">
+                  <input className={inputCls} maxLength={450} value={draft.parishName ?? ""} onChange={(e) => set("parishName", e.target.value)} placeholder="Parroquia San Pedro" />
+                </Field>
+                <Field label="Hora en parroquia">
+                  <input className={inputCls} maxLength={40} value={draft.parishTime ?? ""} onChange={(e) => set("parishTime", e.target.value)} placeholder="Ej: 11:00 AM" />
+                </Field>
+                <MapPicker
+                  value={draft.parishMapUrl ?? ""}
+                  onChange={(embedUrl) => {
+                    set("parishMapUrl", embedUrl);
+                  }}
+                />
+              </div>
+            )}
+            {key === "reception" && (
+              <div className="space-y-3">
+                <Field label="Nombre del salon de recepciones">
+                  <input className={inputCls} maxLength={450} value={draft.receptionName ?? ""} onChange={(e) => set("receptionName", e.target.value)} placeholder="Salon Villa Dorada" />
+                </Field>
+                <Field label="Hora en salon">
+                  <input className={inputCls} maxLength={40} value={draft.receptionTime ?? ""} onChange={(e) => set("receptionTime", e.target.value)} placeholder="Ej: 1:00 PM" />
+                </Field>
+                <MapPicker
+                  value={draft.receptionMapUrl ?? ""}
+                  onChange={(embedUrl) => {
+                    set("receptionMapUrl", embedUrl);
+                  }}
+                />
+              </div>
+            )}
             {key === "gallery" && (
               <ImageUploader
                 label="Fotos de la galeria (puedes subir varias a la vez)"
@@ -751,17 +894,6 @@ export default function InvitationEditor({ initial }: { initial?: Invitation }) 
               <Field label="Dress code">
                 <input className={inputCls} value={draft.dressCode ?? ""} onChange={(e) => set("dressCode", e.target.value)} placeholder="Ej: Formal, etiqueta oscura" />
               </Field>
-            )}
-            {key === "map" && (
-              <>
-                <MapPicker
-                  value={draft.mapUrl ?? ""}
-                  onChange={(embedUrl, address) => {
-                    set("mapUrl", embedUrl);
-                    if (!draft.address) set("address", address.split(",").slice(0, 3).join(","));
-                  }}
-                />
-              </>
             )}
             {key === "rsvp" && (
               <p className="text-xs text-gray-500">El formulario RSVP se activa automaticamente para los invitados en la pagina publica.</p>

@@ -1,7 +1,7 @@
 import mongoose, { Schema, model, models } from "mongoose";
 import type { AppUser, Invitation, InvitationComment, RSVP } from "@/types/invitation";
 
-const SECTION_KEYS = ["hero", "details", "countdown", "timeline", "gallery", "message", "dressCode", "map", "rsvp", "music"];
+const SECTION_KEYS = ["hero", "details", "countdown", "timeline", "family", "parish", "reception", "gallery", "message", "dressCode", "rsvp", "music"];
 
 const InvitationSchema = new Schema<Invitation>(
   {
@@ -16,8 +16,16 @@ const InvitationSchema = new Schema<Invitation>(
     dateTime: String,
     place: String,
     address: String,
-    mapUrl: String,
     timeline: [{ time: String, title: String, description: String }],
+    parents: String,
+    godparents: String,
+    witnesses: String,
+    parishName: String,
+    parishTime: String,
+    parishMapUrl: String,
+    receptionName: String,
+    receptionTime: String,
+    receptionMapUrl: String,
     message: String,
     dressCode: String,
     musicUrl: String,
@@ -80,6 +88,19 @@ export const InvitationModel =
       }
       if (!existing.schema.path("sectionOrder")) {
         existing.schema.add({ sectionOrder: [{ type: String, enum: SECTION_KEYS }] });
+      }
+      if (!existing.schema.path("parents")) {
+        existing.schema.add({
+          parents: String,
+          godparents: String,
+          witnesses: String,
+          parishName: String,
+          parishTime: String,
+          parishMapUrl: String,
+          receptionName: String,
+          receptionTime: String,
+          receptionMapUrl: String,
+        });
       }
       return existing;
     }

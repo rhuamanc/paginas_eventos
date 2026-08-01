@@ -27,6 +27,14 @@ function formatDate(iso: string) {
   catch { return iso; }
 }
 
+function parsePeopleList(text?: string) {
+  if (!text) return [];
+  return text
+    .split(/\r?\n/)
+    .map((line) => line.trim())
+    .filter(Boolean);
+}
+
 export default async function PublicInvitationPage({ params }: Props) {
   const { slug } = await params;
   const inv: Invitation | null = await getInvitationBySlug(slug);
@@ -36,7 +44,7 @@ export default async function PublicInvitationPage({ params }: Props) {
   const accent = inv.primaryColor || theme.accent;
   const sectionOrder: SectionKey[] = inv.sectionOrder?.length
     ? inv.sectionOrder
-    : ["hero", "details", "countdown", "timeline", "gallery", "message", "dressCode", "map", "rsvp", "music"];
+    : ["hero", "details", "countdown", "timeline", "family", "parish", "reception", "gallery", "message", "dressCode", "rsvp", "music"];
   const enabledSections: SectionKey[] = inv.sections?.length
     ? inv.sections
     : sectionOrder;
@@ -121,6 +129,83 @@ export default async function PublicInvitationPage({ params }: Props) {
               </section>
             );
 
+          case "family": {
+            const parents = parsePeopleList(inv.parents);
+            const godparents = parsePeopleList(inv.godparents);
+            const witnesses = parsePeopleList(inv.witnesses);
+            if (!parents.length && !godparents.length && !witnesses.length) return null;
+
+            return (
+              <section key="family" className="py-14 px-6" style={{ background: "var(--th-card)" }}>
+                <p className="text-xs uppercase tracking-widest opacity-60 text-center mb-6">Familia y acompañantes</p>
+                <div className="mx-auto grid max-w-4xl gap-4 md:grid-cols-3">
+                  <div className="rounded-2xl bg-white/50 p-4">
+                    <p className="mb-3 text-sm font-semibold uppercase tracking-wide">Padres</p>
+                    {parents.length ? (
+                      <ul className="space-y-1 text-sm">
+                        {parents.map((item) => (
+                          <li key={item}>• {item}</li>
+                        ))}
+                      </ul>
+                    ) : <p className="text-sm opacity-60">Sin datos</p>}
+                  </div>
+
+                  <div className="rounded-2xl bg-white/50 p-4">
+                    <p className="mb-3 text-sm font-semibold uppercase tracking-wide">Padrinos</p>
+                    {godparents.length ? (
+                      <ul className="space-y-1 text-sm">
+                        {godparents.map((item) => (
+                          <li key={item}>• {item}</li>
+                        ))}
+                      </ul>
+                    ) : <p className="text-sm opacity-60">Sin datos</p>}
+                  </div>
+
+                  <div className="rounded-2xl bg-white/50 p-4">
+                    <p className="mb-3 text-sm font-semibold uppercase tracking-wide">Testigos</p>
+                    {witnesses.length ? (
+                      <ul className="space-y-1 text-sm">
+                        {witnesses.map((item) => (
+                          <li key={item}>• {item}</li>
+                        ))}
+                      </ul>
+                    ) : <p className="text-sm opacity-60">Sin datos</p>}
+                  </div>
+                </div>
+              </section>
+            );
+          }
+
+          case "parish":
+            if (!inv.parishName && !inv.parishTime && !inv.parishMapUrl) return null;
+            return (
+              <section key="parish" className="py-14 px-6 text-center">
+                <p className="text-xs uppercase tracking-widest opacity-60 mb-2">Parroquia</p>
+                {inv.parishName ? <p className="text-2xl font-semibold">{inv.parishName}</p> : null}
+                {inv.parishTime ? <p className="mt-2 text-sm opacity-70">Hora: {inv.parishTime}</p> : null}
+                {inv.parishMapUrl ? (
+                  <div className="mt-6 rounded-2xl overflow-hidden max-w-3xl mx-auto shadow-lg w-full" style={{ height: 320 }}>
+                    <iframe src={inv.parishMapUrl} className="w-full h-full border-0" title="Ubicacion de la parroquia" loading="lazy" />
+                  </div>
+                ) : null}
+              </section>
+            );
+
+          case "reception":
+            if (!inv.receptionName && !inv.receptionTime && !inv.receptionMapUrl) return null;
+            return (
+              <section key="reception" className="py-14 px-6 text-center" style={{ background: "var(--th-card)" }}>
+                <p className="text-xs uppercase tracking-widest opacity-60 mb-2">Salon de recepciones</p>
+                {inv.receptionName ? <p className="text-2xl font-semibold">{inv.receptionName}</p> : null}
+                {inv.receptionTime ? <p className="mt-2 text-sm opacity-70">Hora: {inv.receptionTime}</p> : null}
+                {inv.receptionMapUrl ? (
+                  <div className="mt-6 rounded-2xl overflow-hidden max-w-3xl mx-auto shadow-lg w-full" style={{ height: 320 }}>
+                    <iframe src={inv.receptionMapUrl} className="w-full h-full border-0" title="Ubicacion del salon de recepciones" loading="lazy" />
+                  </div>
+                ) : null}
+              </section>
+            );
+
           case "gallery":
             if (!inv.gallery?.length) return null;
             return (
@@ -153,17 +238,6 @@ export default async function PublicInvitationPage({ params }: Props) {
               <section key="dressCode" className="py-10 px-6 text-center" style={{ background: "var(--th-card)" }}>
                 <p className="text-xs uppercase tracking-widest opacity-60 mb-2">Dress Code</p>
                 <p className="text-xl font-semibold">{inv.dressCode}</p>
-              </section>
-            );
-
-          case "map":
-            if (!inv.mapUrl) return null;
-            return (
-              <section key="map" className="py-14 px-6 text-center">
-                <p className="text-xs uppercase tracking-widest opacity-60 mb-6">Como llegar</p>
-                <div className="rounded-2xl overflow-hidden max-w-3xl mx-auto shadow-lg w-full" style={{ height: 320 }}>
-                  <iframe src={inv.mapUrl} className="w-full h-full border-0" title="Ubicacion del evento" loading="lazy" />
-                </div>
               </section>
             );
 

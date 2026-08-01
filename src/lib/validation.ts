@@ -1,6 +1,6 @@
 import { z } from "zod";
 
-const sectionKeySchema = z.enum(["hero", "details", "countdown", "timeline", "gallery", "message", "dressCode", "map", "rsvp", "music"]);
+const sectionKeySchema = z.enum(["hero", "details", "countdown", "timeline", "family", "parish", "reception", "gallery", "message", "dressCode", "rsvp", "music"]);
 const timelineItemSchema = z.object({
   time: z.string().min(1, "La hora del timeline es obligatoria.").max(40, "La hora del timeline no puede superar 40 caracteres."),
   title: z.string().min(1, "La actividad del timeline es obligatoria.").max(120, "La actividad del timeline no puede superar 120 caracteres."),
@@ -18,8 +18,16 @@ export const invitationSchema = z.object({
   dateTime: z.string().max(40, "La fecha y hora no puede superar 40 caracteres.").optional(),
   place: z.string().max(450, "Lugar no puede superar 450 caracteres.").optional(),
   address: z.string().max(200, "Direccion no puede superar 200 caracteres.").optional(),
-  mapUrl: z.string().max(1000, "El enlace del mapa es demasiado largo.").optional(),
   timeline: z.array(timelineItemSchema).max(20).default([]),
+  parents: z.string().max(450, "Padres no puede superar 450 caracteres.").optional(),
+  godparents: z.string().max(450, "Padrinos no puede superar 450 caracteres.").optional(),
+  witnesses: z.string().max(450, "Testigos no puede superar 450 caracteres.").optional(),
+  parishName: z.string().max(450, "Nombre de la parroquia no puede superar 450 caracteres.").optional(),
+  parishTime: z.string().max(40, "Hora de la parroquia no puede superar 40 caracteres.").optional(),
+  parishMapUrl: z.string().max(1000, "El mapa de la parroquia es demasiado largo.").optional(),
+  receptionName: z.string().max(450, "Nombre del salon no puede superar 450 caracteres.").optional(),
+  receptionTime: z.string().max(40, "Hora del salon no puede superar 40 caracteres.").optional(),
+  receptionMapUrl: z.string().max(1000, "El mapa del salon es demasiado largo.").optional(),
   message: z.string().max(1000, "El mensaje no puede superar 1000 caracteres.").optional(),
   dressCode: z.string().max(120, "Dress code no puede superar 120 caracteres.").optional(),
   musicUrl: z.string().max(500, "La URL de musica no puede superar 500 caracteres.").optional(),
@@ -27,8 +35,8 @@ export const invitationSchema = z.object({
   theme: z.enum(["elegant", "romantic", "modern", "floral"]).default("elegant"),
   primaryColor: z.string().max(32, "Color principal invalido.").optional(),
   textColor: z.string().max(32, "Color de texto invalido.").optional(),
-  sections: z.array(sectionKeySchema).default(["hero", "details", "countdown", "timeline", "gallery", "message", "dressCode", "map", "rsvp", "music"]),
-  sectionOrder: z.array(sectionKeySchema).default(["hero", "details", "countdown", "timeline", "gallery", "message", "dressCode", "map", "rsvp", "music"]),
+  sections: z.array(sectionKeySchema).default(["hero", "details", "countdown", "timeline", "family", "parish", "reception", "gallery", "message", "dressCode", "rsvp", "music"]),
+  sectionOrder: z.array(sectionKeySchema).default(["hero", "details", "countdown", "timeline", "family", "parish", "reception", "gallery", "message", "dressCode", "rsvp", "music"]),
 });
 
 export const rsvpSchema = z.object({
