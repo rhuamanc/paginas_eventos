@@ -120,6 +120,93 @@ function parsePeopleList(text?: string) {
     .filter(Boolean);
 }
 
+function applySectionDefaults(draft: DraftInvitation, key: SectionKey): DraftInvitation {
+  const defaults = getDefaultDraft();
+
+  switch (key) {
+    case "hero":
+      return {
+        ...draft,
+        title: draft.title?.trim() ? draft.title : defaults.title,
+        subtitle: draft.subtitle?.trim() ? draft.subtitle : defaults.subtitle,
+        heroImage: draft.heroImage?.trim() ? draft.heroImage : defaults.heroImage,
+      };
+
+    case "details":
+      return {
+        ...draft,
+        hostNames: draft.hostNames?.trim() ? draft.hostNames : defaults.hostNames,
+        dateTime: draft.dateTime?.trim() ? draft.dateTime : defaults.dateTime,
+        place: draft.place?.trim() ? draft.place : defaults.place,
+        address: draft.address?.trim() ? draft.address : defaults.address,
+      };
+
+    case "countdown":
+      return {
+        ...draft,
+        dateTime: draft.dateTime?.trim() ? draft.dateTime : defaults.dateTime,
+      };
+
+    case "timeline":
+      return {
+        ...draft,
+        timeline: draft.timeline?.length ? draft.timeline : defaults.timeline,
+      };
+
+    case "family":
+      return {
+        ...draft,
+        parents: draft.parents?.trim() ? draft.parents : defaults.parents,
+        godparents: draft.godparents?.trim() ? draft.godparents : defaults.godparents,
+        witnesses: draft.witnesses?.trim() ? draft.witnesses : defaults.witnesses,
+      };
+
+    case "parish":
+      return {
+        ...draft,
+        parishName: draft.parishName?.trim() ? draft.parishName : defaults.parishName,
+        parishTime: draft.parishTime?.trim() ? draft.parishTime : defaults.parishTime,
+        parishMapUrl: draft.parishMapUrl?.trim() ? draft.parishMapUrl : defaults.parishMapUrl,
+      };
+
+    case "reception":
+      return {
+        ...draft,
+        receptionName: draft.receptionName?.trim() ? draft.receptionName : defaults.receptionName,
+        receptionTime: draft.receptionTime?.trim() ? draft.receptionTime : defaults.receptionTime,
+        receptionMapUrl: draft.receptionMapUrl?.trim() ? draft.receptionMapUrl : defaults.receptionMapUrl,
+      };
+
+    case "gallery":
+      return {
+        ...draft,
+        gallery: draft.gallery?.length ? draft.gallery : defaults.gallery,
+      };
+
+    case "message":
+      return {
+        ...draft,
+        message: draft.message?.trim() ? draft.message : defaults.message,
+      };
+
+    case "dressCode":
+      return {
+        ...draft,
+        dressCode: draft.dressCode?.trim() ? draft.dressCode : defaults.dressCode,
+      };
+
+    case "music":
+      return {
+        ...draft,
+        musicUrl: draft.musicUrl?.trim() ? draft.musicUrl : defaults.musicUrl,
+      };
+
+    case "rsvp":
+    default:
+      return draft;
+  }
+}
+
 function formatDate(iso: string) {
   if (!iso) return "";
   try {
@@ -513,12 +600,21 @@ export default function InvitationEditor({ initial }: { initial?: Invitation }) 
   }, []);
 
   const toggleSection = useCallback((key: SectionKey) => {
-    setDraft((d) => ({
-      ...d,
-      sections: d.sections.includes(key)
-        ? d.sections.filter((s) => s !== key)
-        : [...d.sections, key],
-    }));
+    setDraft((d) => {
+      if (d.sections.includes(key)) {
+        return {
+          ...d,
+          sections: d.sections.filter((s) => s !== key),
+        };
+      }
+
+      const withSectionEnabled = {
+        ...d,
+        sections: [...d.sections, key],
+      };
+
+      return applySectionDefaults(withSectionEnabled, key);
+    });
   }, []);
 
   const reorderSections = useCallback((fromKey: SectionKey, toKey: SectionKey) => {
