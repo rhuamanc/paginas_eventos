@@ -18,6 +18,7 @@ export type SectionKey =
   | "reception"
   | "gallery"
   | "message"
+  | "giftTable"
   | "dressCode"
   | "rsvp"
   | "music";
@@ -40,6 +41,8 @@ export type Invitation = {
   timeline?: TimelineItem[];
   // Parents / godparents / witnesses
   parents?: string;
+  brideParents?: string;
+  groomParents?: string;
   parentsBulletStyle?: BulletStyle;
   godparents?: string;
   godparentsBulletStyle?: BulletStyle;
@@ -55,6 +58,8 @@ export type Invitation = {
   receptionMapUrl?: string;
   // Message
   message?: string;
+  // Gift table
+  giftTable?: string;
   // Gallery
   gallery: string[];
   // Dress code

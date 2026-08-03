@@ -58,7 +58,7 @@ export default async function PublicInvitationPage({ params }: Props) {
   const accent = inv.primaryColor || theme.accent;
   const sectionOrder: SectionKey[] = inv.sectionOrder?.length
     ? inv.sectionOrder
-    : ["hero", "details", "countdown", "timeline", "parents", "godparents", "witnesses", "parish", "reception", "gallery", "message", "dressCode", "rsvp", "music"];
+    : ["hero", "details", "countdown", "timeline", "parents", "godparents", "witnesses", "parish", "reception", "gallery", "message", "giftTable", "dressCode", "rsvp", "music"];
   const enabledSections: SectionKey[] = inv.sections?.length
     ? inv.sections
     : sectionOrder;
@@ -72,7 +72,6 @@ export default async function PublicInvitationPage({ params }: Props) {
   return (
     <main style={{ ...themeVars, background: "var(--th-bg)", color: "var(--th-text)", fontFamily: "Georgia,serif", minHeight: "100vh" }}>
       {inv.musicUrl && (
-        // eslint-disable-next-line jsx-a11y/media-has-caption
         <audio src={inv.musicUrl} autoPlay loop style={{ display: "none" }} />
       )}
 
@@ -144,19 +143,36 @@ export default async function PublicInvitationPage({ params }: Props) {
             );
 
           case "parents": {
-            const parents = parsePeopleList(inv.parents);
-            if (!parents.length) return null;
+            const legacyParents = parsePeopleList(inv.parents);
+            const brideParents = parsePeopleList(inv.brideParents || (legacyParents.length ? inv.parents : ""));
+            const groomParents = parsePeopleList(inv.groomParents);
+            if (!brideParents.length && !groomParents.length) return null;
             const bullet = getBulletPrefix(inv.parentsBulletStyle);
 
             return (
               <section key="parents" className="py-14 px-6" style={{ background: "var(--th-card)" }}>
-                <p className="text-xs uppercase tracking-widest opacity-60 text-center mb-6">Padres</p>
-                <div className="mx-auto max-w-3xl rounded-2xl bg-white/50 p-4">
-                  <ul className="space-y-1 text-sm">
-                    {parents.map((item) => (
-                      <li key={item}>{bullet} {item}</li>
-                    ))}
-                  </ul>
+                <p className="text-xs uppercase tracking-widest opacity-60 text-center mb-6">CON LA BENDICION DE NUESTRAS FAMILIAS:</p>
+                <div className="mx-auto max-w-3xl rounded-2xl bg-white/50 p-4 space-y-4">
+                  {brideParents.length ? (
+                    <div>
+                      <p className="mb-2 text-xs font-semibold uppercase tracking-wider opacity-70">Padres de la novia</p>
+                      <ul className="space-y-1 text-sm">
+                        {brideParents.map((item) => (
+                          <li key={`bride-${item}`}>{bullet} {item}</li>
+                        ))}
+                      </ul>
+                    </div>
+                  ) : null}
+                  {groomParents.length ? (
+                    <div>
+                      <p className="mb-2 text-xs font-semibold uppercase tracking-wider opacity-70">Padres del novio</p>
+                      <ul className="space-y-1 text-sm">
+                        {groomParents.map((item) => (
+                          <li key={`groom-${item}`}>{bullet} {item}</li>
+                        ))}
+                      </ul>
+                    </div>
+                  ) : null}
                 </div>
               </section>
             );
@@ -251,6 +267,15 @@ export default async function PublicInvitationPage({ params }: Props) {
                 <p className="text-xl md:text-2xl italic leading-relaxed max-w-2xl mx-auto opacity-90">
                   &ldquo;{inv.message}&rdquo;
                 </p>
+              </section>
+            );
+
+          case "giftTable":
+            if (!inv.giftTable) return null;
+            return (
+              <section key="giftTable" className="py-10 px-6 text-center" style={{ background: "var(--th-card)" }}>
+                <p className="text-xs uppercase tracking-widest opacity-60 mb-3">Mesa de regalos</p>
+                <p className="mx-auto max-w-2xl text-sm leading-relaxed whitespace-pre-line">{inv.giftTable}</p>
               </section>
             );
 

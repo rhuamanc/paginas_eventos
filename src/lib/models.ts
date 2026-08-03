@@ -1,7 +1,7 @@
 import mongoose, { Schema, model, models } from "mongoose";
 import type { AppUser, Invitation, InvitationComment, RSVP } from "@/types/invitation";
 
-const SECTION_KEYS = ["hero", "details", "countdown", "timeline", "parents", "godparents", "witnesses", "parish", "reception", "gallery", "message", "dressCode", "rsvp", "music"];
+const SECTION_KEYS = ["hero", "details", "countdown", "timeline", "parents", "godparents", "witnesses", "parish", "reception", "gallery", "message", "giftTable", "dressCode", "rsvp", "music"];
 
 const InvitationSchema = new Schema<Invitation>(
   {
@@ -18,6 +18,8 @@ const InvitationSchema = new Schema<Invitation>(
     address: String,
     timeline: [{ time: String, title: String, description: String }],
     parents: String,
+    brideParents: String,
+    groomParents: String,
     parentsBulletStyle: { type: String, enum: ["dot", "circle", "square", "dash"], default: "dot" },
     godparents: String,
     godparentsBulletStyle: { type: String, enum: ["dot", "circle", "square", "dash"], default: "dot" },
@@ -30,6 +32,7 @@ const InvitationSchema = new Schema<Invitation>(
     receptionTime: String,
     receptionMapUrl: String,
     message: String,
+    giftTable: String,
     dressCode: String,
     musicUrl: String,
     gallery: [String],
@@ -95,6 +98,8 @@ export const InvitationModel =
       if (!existing.schema.path("parents")) {
         existing.schema.add({
           parents: String,
+          brideParents: String,
+          groomParents: String,
           parentsBulletStyle: { type: String, enum: ["dot", "circle", "square", "dash"], default: "dot" },
           godparents: String,
           godparentsBulletStyle: { type: String, enum: ["dot", "circle", "square", "dash"], default: "dot" },
@@ -106,6 +111,7 @@ export const InvitationModel =
           receptionName: String,
           receptionTime: String,
           receptionMapUrl: String,
+          giftTable: String,
         });
       }
       return existing;

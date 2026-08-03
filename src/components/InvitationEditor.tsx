@@ -1,6 +1,6 @@
 ﻿"use client";
 
-import { useState, useRef, useCallback } from "react";
+import { useState, useCallback } from "react";
 import { useRouter } from "next/navigation";
 import dynamic from "next/dynamic";
 import ImageUploader from "./ImageUploader";
@@ -18,7 +18,7 @@ type DraftInvitation = Omit<Invitation, "id" | "slug" | "ownerId" | "createdAt" 
 };
 
 const ALL_SECTIONS: SectionKey[] = [
-  "hero", "details", "countdown", "timeline", "parents", "godparents", "witnesses", "parish", "reception", "gallery", "message", "dressCode", "rsvp", "music",
+  "hero", "details", "countdown", "timeline", "parents", "godparents", "witnesses", "parish", "reception", "gallery", "message", "giftTable", "dressCode", "rsvp", "music",
 ];
 
 const SECTION_LABELS: Record<SectionKey, string> = {
@@ -26,13 +26,14 @@ const SECTION_LABELS: Record<SectionKey, string> = {
   details: "Fecha, hora y lugar",
   countdown: "Cuenta regresiva",
   timeline: "Timeline / programacion",
-  parents: "Padres",
+  parents: "Bendicion de familias",
   godparents: "Padrinos",
   witnesses: "Testigos",
   parish: "Parroquia",
   reception: "Salon de recepciones",
   gallery: "Galeria de fotos",
   message: "Mensaje personalizado",
+  giftTable: "Mesa de regalos",
   dressCode: "Dress code",
   rsvp: "Formulario RSVP",
   music: "Musica de fondo",
@@ -86,7 +87,9 @@ function getDefaultDraft(): DraftInvitation {
       { time: "8:00 AM", title: "Recepcion de invitados", description: "Bienvenida y coctel inicial" },
       { time: "9:00 AM", title: "Ceremonia", description: "Inicio del momento principal" },
     ],
-    parents: "Padres de la novia\nPadres del novio",
+    parents: "",
+    brideParents: "Padre de la novia\nMadre de la novia",
+    groomParents: "Padre del novio\nMadre del novio",
     parentsBulletStyle: "dot",
     godparents: "Padrinos de ceremonia",
     godparentsBulletStyle: "dot",
@@ -99,6 +102,7 @@ function getDefaultDraft(): DraftInvitation {
     receptionTime: "1:00 PM",
     receptionMapUrl: "https://maps.google.com/maps?q=-12.0505,-77.0332&output=embed&z=16",
     message: "Gracias por acompanarnos en el inicio de esta nueva etapa. Tu presencia hara este momento aun mas inolvidable.",
+    giftTable: "Tu presencia es nuestro mejor regalo, pero si deseas tener un detalle con nosotros, aqui compartimos nuestra mesa de regalos.",
     gallery: DEFAULT_GALLERY,
     dressCode: "Formal elegante",
     musicUrl: "",
@@ -182,7 +186,8 @@ function applySectionDefaults(draft: DraftInvitation, key: SectionKey): DraftInv
     case "parents":
       return {
         ...draft,
-        parents: draft.parents?.trim() ? draft.parents : defaults.parents,
+        brideParents: draft.brideParents?.trim() ? draft.brideParents : defaults.brideParents,
+        groomParents: draft.groomParents?.trim() ? draft.groomParents : defaults.groomParents,
         parentsBulletStyle: draft.parentsBulletStyle ?? defaults.parentsBulletStyle,
       };
 
@@ -226,6 +231,12 @@ function applySectionDefaults(draft: DraftInvitation, key: SectionKey): DraftInv
       return {
         ...draft,
         message: draft.message?.trim() ? draft.message : defaults.message,
+      };
+
+    case "giftTable":
+      return {
+        ...draft,
+        giftTable: draft.giftTable?.trim() ? draft.giftTable : defaults.giftTable,
       };
 
     case "dressCode":
@@ -369,14 +380,27 @@ function PagePreview({ draft }: { draft: DraftInvitation }) {
             );
 
           case "parents": {
-            const items = parsePeopleList(draft.parents);
-            if (!items.length) return null;
+            const legacyParents = parsePeopleList(draft.parents);
+            const brideParents = parsePeopleList(draft.brideParents || (legacyParents.length ? draft.parents : ""));
+            const groomParents = parsePeopleList(draft.groomParents);
+            if (!brideParents.length && !groomParents.length) return null;
             const bullet = getBulletPrefix(draft.parentsBulletStyle);
             return (
               <section key="parents" className="py-8 px-6" style={{ background: "var(--th-card)" }}>
-                <p className="text-xs uppercase tracking-widest opacity-60 text-center mb-4">Padres</p>
-                <div className="mx-auto max-w-xl rounded-xl bg-white/10 p-4">
-                  {items.map((item) => <p key={item} className="text-sm">{bullet} {item}</p>)}
+                <p className="text-xs uppercase tracking-widest opacity-60 text-center mb-4">CON LA BENDICION DE NUESTRAS FAMILIAS:</p>
+                <div className="mx-auto max-w-xl space-y-3 rounded-xl bg-white/10 p-4">
+                  {brideParents.length ? (
+                    <div>
+                      <p className="mb-1 text-xs font-semibold uppercase tracking-wider opacity-70">Padres de la novia</p>
+                      {brideParents.map((item) => <p key={`bride-${item}`} className="text-sm">{bullet} {item}</p>)}
+                    </div>
+                  ) : null}
+                  {groomParents.length ? (
+                    <div>
+                      <p className="mb-1 text-xs font-semibold uppercase tracking-wider opacity-70">Padres del novio</p>
+                      {groomParents.map((item) => <p key={`groom-${item}`} className="text-sm">{bullet} {item}</p>)}
+                    </div>
+                  ) : null}
                 </div>
               </section>
             );
@@ -463,6 +487,15 @@ function PagePreview({ draft }: { draft: DraftInvitation }) {
                 <p className="italic text-base leading-relaxed opacity-90 max-w-md mx-auto">
                   &ldquo;{draft.message}&rdquo;
                 </p>
+              </section>
+            );
+
+          case "giftTable":
+            if (!draft.giftTable) return null;
+            return (
+              <section key="giftTable" className="py-8 px-6 text-center" style={{ background: "var(--th-card)" }}>
+                <p className="text-xs uppercase tracking-widest opacity-60 mb-3">Mesa de regalos</p>
+                <p className="mx-auto max-w-lg text-sm leading-relaxed whitespace-pre-line">{draft.giftTable}</p>
               </section>
             );
 
@@ -628,6 +661,8 @@ export default function InvitationEditor({ initial }: { initial?: Invitation }) 
       address: initial.address ?? "",
       timeline: initial.timeline ?? [],
       parents: initial.parents ?? "",
+      brideParents: initial.brideParents ?? "",
+      groomParents: initial.groomParents ?? "",
       parentsBulletStyle: initial.parentsBulletStyle ?? "dot",
       godparents: initial.godparents ?? "",
       godparentsBulletStyle: initial.godparentsBulletStyle ?? "dot",
@@ -640,6 +675,7 @@ export default function InvitationEditor({ initial }: { initial?: Invitation }) 
       receptionTime: initial.receptionTime ?? "",
       receptionMapUrl: initial.receptionMapUrl ?? "",
       message: initial.message ?? "",
+      giftTable: initial.giftTable ?? "",
       gallery: initial.gallery ?? [],
       dressCode: initial.dressCode ?? "",
       musicUrl: initial.musicUrl ?? "",
@@ -691,10 +727,6 @@ export default function InvitationEditor({ initial }: { initial?: Invitation }) 
       };
     });
   }, []);
-
-  const removeGalleryItem = (idx: number) => {
-    setDraft((d) => ({ ...d, gallery: (d.gallery ?? []).filter((_, i) => i !== idx) }));
-  };
 
   const updateTimelineItem = (index: number, key: keyof TimelineItem, value: string) => {
     setDraft((d) => ({
@@ -764,7 +796,7 @@ export default function InvitationEditor({ initial }: { initial?: Invitation }) 
         setDraft((d) => ({ ...d, id: saved.id, slug: saved.slug }));
       }
       alert("Guardado correctamente");
-    } catch (err) {
+    } catch {
       setFormError("Error de red al guardar. Intenta nuevamente.");
     } finally {
       setSaving(false);
@@ -983,13 +1015,22 @@ export default function InvitationEditor({ initial }: { initial?: Invitation }) 
                     ))}
                   </select>
                 </Field>
-                <Field label="Padres (un nombre por linea)">
+                <Field label="Padres de la novia (un nombre por linea)">
                   <textarea
                     className={`${inputCls} h-20 resize-none`}
                     maxLength={450}
-                    value={draft.parents ?? ""}
-                    onChange={(e) => set("parents", e.target.value)}
-                    placeholder={`Padre de la novia\nMadre de la novia\nPadre del novio\nMadre del novio`}
+                    value={draft.brideParents ?? ""}
+                    onChange={(e) => set("brideParents", e.target.value)}
+                    placeholder={`Padre de la novia\nMadre de la novia`}
+                  />
+                </Field>
+                <Field label="Padres del novio (un nombre por linea)">
+                  <textarea
+                    className={`${inputCls} h-20 resize-none`}
+                    maxLength={450}
+                    value={draft.groomParents ?? ""}
+                    onChange={(e) => set("groomParents", e.target.value)}
+                    placeholder={`Padre del novio\nMadre del novio`}
                   />
                 </Field>
               </div>
@@ -1089,6 +1130,17 @@ export default function InvitationEditor({ initial }: { initial?: Invitation }) 
                   value={draft.message ?? ""}
                   onChange={(e) => set("message", e.target.value)}
                   placeholder="Escribe un mensaje especial..."
+                />
+              </Field>
+            )}
+            {key === "giftTable" && (
+              <Field label="Contenido de mesa de regalos">
+                <textarea
+                  className={`${inputCls} h-24 resize-none`}
+                  maxLength={450}
+                  value={draft.giftTable ?? ""}
+                  onChange={(e) => set("giftTable", e.target.value)}
+                  placeholder="Comparte aqui enlaces, datos o instrucciones para la mesa de regalos"
                 />
               </Field>
             )}
