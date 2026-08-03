@@ -105,6 +105,8 @@ function getDefaultDraft(): DraftInvitation {
     giftTable: "Tu presencia es nuestro mejor regalo, pero si deseas tener un detalle con nosotros, aqui compartimos nuestra mesa de regalos.",
     gallery: DEFAULT_GALLERY,
     dressCode: "Formal elegante",
+    dressCodeMen: "Terno oscuro",
+    dressCodeWomen: "Vestido elegante",
     musicUrl: "",
     theme: "romantic",
     primaryColor: "#d4608a",
@@ -243,6 +245,8 @@ function applySectionDefaults(draft: DraftInvitation, key: SectionKey): DraftInv
       return {
         ...draft,
         dressCode: draft.dressCode?.trim() ? draft.dressCode : defaults.dressCode,
+        dressCodeMen: draft.dressCodeMen?.trim() ? draft.dressCodeMen : defaults.dressCodeMen,
+        dressCodeWomen: draft.dressCodeWomen?.trim() ? draft.dressCodeWomen : defaults.dressCodeWomen,
       };
 
     case "music":
@@ -500,11 +504,18 @@ function PagePreview({ draft }: { draft: DraftInvitation }) {
             );
 
           case "dressCode":
-            if (!draft.dressCode) return null;
+            if (!draft.dressCode && !draft.dressCodeMen && !draft.dressCodeWomen) return null;
             return (
               <section key="dressCode" className="py-6 px-6 text-center" style={{ background: "var(--th-card)" }}>
                 <p className="text-xs uppercase tracking-widest opacity-60 mb-1">Dress Code</p>
-                <p className="text-base font-semibold">{draft.dressCode}</p>
+                {draft.dressCodeMen || draft.dressCodeWomen ? (
+                  <div className="mx-auto mt-2 max-w-lg space-y-1">
+                    {draft.dressCodeMen ? <p className="text-sm"><span className="font-semibold">Caballeros:</span> {draft.dressCodeMen}</p> : null}
+                    {draft.dressCodeWomen ? <p className="text-sm"><span className="font-semibold">Damas:</span> {draft.dressCodeWomen}</p> : null}
+                  </div>
+                ) : (
+                  <p className="text-base font-semibold">{draft.dressCode}</p>
+                )}
               </section>
             );
 
@@ -678,6 +689,8 @@ export default function InvitationEditor({ initial }: { initial?: Invitation }) 
       giftTable: initial.giftTable ?? "",
       gallery: initial.gallery ?? [],
       dressCode: initial.dressCode ?? "",
+      dressCodeMen: initial.dressCodeMen ?? "",
+      dressCodeWomen: initial.dressCodeWomen ?? "",
       musicUrl: initial.musicUrl ?? "",
       theme: initial.theme ?? "elegant",
       primaryColor: initial.primaryColor ?? "",
@@ -1145,9 +1158,14 @@ export default function InvitationEditor({ initial }: { initial?: Invitation }) 
               </Field>
             )}
             {key === "dressCode" && (
-              <Field label="Dress code">
-                <input className={inputCls} value={draft.dressCode ?? ""} onChange={(e) => set("dressCode", e.target.value)} placeholder="Ej: Formal, etiqueta oscura" />
-              </Field>
+              <div className="space-y-3">
+                <Field label="Dress code caballeros">
+                  <input className={inputCls} maxLength={120} value={draft.dressCodeMen ?? ""} onChange={(e) => set("dressCodeMen", e.target.value)} placeholder="Ej: Terno oscuro" />
+                </Field>
+                <Field label="Dress code damas">
+                  <input className={inputCls} maxLength={120} value={draft.dressCodeWomen ?? ""} onChange={(e) => set("dressCodeWomen", e.target.value)} placeholder="Ej: Vestido elegante" />
+                </Field>
+              </div>
             )}
             {key === "rsvp" && (
               <p className="text-xs text-gray-500">El formulario RSVP se activa automaticamente para los invitados en la pagina publica.</p>

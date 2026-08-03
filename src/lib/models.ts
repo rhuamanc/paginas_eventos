@@ -34,6 +34,8 @@ const InvitationSchema = new Schema<Invitation>(
     message: String,
     giftTable: String,
     dressCode: String,
+    dressCodeMen: String,
+    dressCodeWomen: String,
     musicUrl: String,
     gallery: [String],
     theme: { type: String, enum: ["elegant", "romantic", "modern", "floral"], default: "elegant" },
@@ -112,6 +114,12 @@ export const InvitationModel =
           receptionTime: String,
           receptionMapUrl: String,
           giftTable: String,
+        });
+      }
+      if (!existing.schema.path("dressCodeMen")) {
+        existing.schema.add({
+          dressCodeMen: String,
+          dressCodeWomen: String,
         });
       }
       return existing;

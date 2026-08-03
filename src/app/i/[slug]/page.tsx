@@ -280,11 +280,18 @@ export default async function PublicInvitationPage({ params }: Props) {
             );
 
           case "dressCode":
-            if (!inv.dressCode) return null;
+            if (!inv.dressCode && !inv.dressCodeMen && !inv.dressCodeWomen) return null;
             return (
               <section key="dressCode" className="py-10 px-6 text-center" style={{ background: "var(--th-card)" }}>
                 <p className="text-xs uppercase tracking-widest opacity-60 mb-2">Dress Code</p>
-                <p className="text-xl font-semibold">{inv.dressCode}</p>
+                {inv.dressCodeMen || inv.dressCodeWomen ? (
+                  <div className="mx-auto mt-2 max-w-2xl space-y-2">
+                    {inv.dressCodeMen ? <p className="text-lg"><span className="font-semibold">Dress code caballeros:</span> {inv.dressCodeMen}</p> : null}
+                    {inv.dressCodeWomen ? <p className="text-lg"><span className="font-semibold">Dress code damas:</span> {inv.dressCodeWomen}</p> : null}
+                  </div>
+                ) : (
+                  <p className="text-xl font-semibold">{inv.dressCode}</p>
+                )}
               </section>
             );
 

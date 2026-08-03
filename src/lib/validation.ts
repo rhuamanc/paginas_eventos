@@ -37,6 +37,8 @@ export const invitationSchema = z.object({
   message: z.string().max(1000, "El mensaje no puede superar 1000 caracteres.").optional(),
   giftTable: z.string().max(1500, "Mesa de regalos no puede superar 1500 caracteres.").optional(),
   dressCode: z.string().max(120, "Dress code no puede superar 120 caracteres.").optional(),
+  dressCodeMen: z.string().max(120, "Dress code caballeros no puede superar 120 caracteres.").optional(),
+  dressCodeWomen: z.string().max(120, "Dress code damas no puede superar 120 caracteres.").optional(),
   musicUrl: z.string().max(500, "La URL de musica no puede superar 500 caracteres.").optional(),
   gallery: z.array(z.string().max(5_000_000)).max(20).default([]),
   theme: z.enum(["elegant", "romantic", "modern", "floral"]).default("elegant"),

@@ -64,6 +64,8 @@ export type Invitation = {
   gallery: string[];
   // Dress code
   dressCode?: string;
+  dressCodeMen?: string;
+  dressCodeWomen?: string;
   // Music
   musicUrl?: string;
   // Theme
