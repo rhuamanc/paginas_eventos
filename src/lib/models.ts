@@ -43,6 +43,10 @@ const InvitationSchema = new Schema<Invitation>(
     textColor: String,
     sections: [{ type: String, enum: SECTION_KEYS }],
     sectionOrder: [{ type: String, enum: SECTION_KEYS }],
+    commentsEnabled: { type: Boolean, default: true },
+    commentsAllowPhotos: { type: Boolean, default: true },
+    customSections: [{ id: String, title: String, content: String }],
+    fullOrder: [String],
     createdAt: String,
     updatedAt: String,
   },
@@ -120,6 +124,14 @@ export const InvitationModel =
         existing.schema.add({
           dressCodeMen: String,
           dressCodeWomen: String,
+        });
+      }
+      if (!existing.schema.path("commentsEnabled")) {
+        existing.schema.add({
+          commentsEnabled: { type: Boolean, default: true },
+          commentsAllowPhotos: { type: Boolean, default: true },
+          customSections: [{ id: String, title: String, content: String }],
+          fullOrder: [String],
         });
       }
       return existing;

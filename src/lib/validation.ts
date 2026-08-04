@@ -46,6 +46,14 @@ export const invitationSchema = z.object({
   textColor: z.string().max(32, "Color de texto invalido.").optional(),
   sections: z.array(sectionKeySchema).default(["hero", "details", "countdown", "timeline", "parents", "godparents", "witnesses", "parish", "reception", "gallery", "message", "giftTable", "dressCode", "rsvp", "music"]),
   sectionOrder: z.array(sectionKeySchema).default(["hero", "details", "countdown", "timeline", "parents", "godparents", "witnesses", "parish", "reception", "gallery", "message", "giftTable", "dressCode", "rsvp", "music"]),
+  commentsEnabled: z.boolean().default(true),
+  commentsAllowPhotos: z.boolean().default(true),
+  customSections: z.array(z.object({
+    id: z.string().max(40),
+    title: z.string().max(120, "El titulo de la seccion no puede superar 120 caracteres."),
+    content: z.string().max(2000, "El contenido de la seccion no puede superar 2000 caracteres."),
+  })).max(10, "No puedes agregar mas de 10 secciones personalizadas.").default([]),
+  fullOrder: z.array(z.string().max(40)).optional(),
 });
 
 export const rsvpSchema = z.object({

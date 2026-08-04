@@ -88,6 +88,10 @@ export async function upsertInvitation(input: Partial<Invitation> & { title: str
     textColor: input.textColor ?? "",
     sections: input.sections ?? ["hero", "details", "countdown", "timeline", "parents", "godparents", "witnesses", "parish", "reception", "gallery", "message", "giftTable", "dressCode", "rsvp", "music"],
     sectionOrder: input.sectionOrder ?? existing?.sectionOrder ?? ["hero", "details", "countdown", "timeline", "parents", "godparents", "witnesses", "parish", "reception", "gallery", "message", "giftTable", "dressCode", "rsvp", "music"],
+    commentsEnabled: input.commentsEnabled ?? true,
+    commentsAllowPhotos: input.commentsAllowPhotos ?? true,
+    customSections: input.customSections ?? [],
+    fullOrder: input.fullOrder ?? [],
     createdAt: (existing as unknown as Invitation)?.createdAt ?? now,
     updatedAt: now,
   };
@@ -154,6 +158,10 @@ export async function upsertInvitationForOwner(
     textColor: input.textColor ?? "",
     sections: input.sections ?? ["hero", "details", "countdown", "timeline", "parents", "godparents", "witnesses", "parish", "reception", "gallery", "message", "giftTable", "dressCode", "rsvp", "music"],
     sectionOrder: input.sectionOrder ?? existing?.sectionOrder ?? ["hero", "details", "countdown", "timeline", "parents", "godparents", "witnesses", "parish", "reception", "gallery", "message", "giftTable", "dressCode", "rsvp", "music"],
+    commentsEnabled: input.commentsEnabled ?? true,
+    commentsAllowPhotos: input.commentsAllowPhotos ?? true,
+    customSections: input.customSections ?? [],
+    fullOrder: input.fullOrder ?? [],
     createdAt: (existing as unknown as Invitation)?.createdAt ?? now,
     updatedAt: now,
   };

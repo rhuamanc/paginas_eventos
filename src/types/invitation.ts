@@ -68,6 +68,13 @@ export type Invitation = {
   dressCodeWomen?: string;
   // Music
   musicUrl?: string;
+  // Custom sections
+  customSections?: Array<{ id: string; title: string; content: string }>;
+  // Comments settings
+  commentsEnabled?: boolean;
+  commentsAllowPhotos?: boolean;
+  // Full combined section order (builtin keys + custom IDs)
+  fullOrder?: string[];
   // Theme
   theme: ThemeStyle;
   primaryColor?: string;

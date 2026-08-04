@@ -56,13 +56,17 @@ export default async function PublicInvitationPage({ params }: Props) {
 
   const theme = THEMES[inv.theme as keyof typeof THEMES] ?? THEMES.elegant;
   const accent = inv.primaryColor || theme.accent;
-  const sectionOrder: SectionKey[] = inv.sectionOrder?.length
+  const ALL_SECTION_KEYS = ["hero", "details", "countdown", "timeline", "parents", "godparents", "witnesses", "parish", "reception", "gallery", "message", "giftTable", "dressCode", "rsvp", "music"] as const;
+  const builtinOrder: SectionKey[] = inv.sectionOrder?.length
     ? inv.sectionOrder
-    : ["hero", "details", "countdown", "timeline", "parents", "godparents", "witnesses", "parish", "reception", "gallery", "message", "giftTable", "dressCode", "rsvp", "music"];
+    : [...ALL_SECTION_KEYS];
   const enabledSections: SectionKey[] = inv.sections?.length
     ? inv.sections
-    : sectionOrder;
-  const sections = sectionOrder.filter((section) => enabledSections.includes(section));
+    : builtinOrder;
+  const customSectionsById = Object.fromEntries((inv.customSections ?? []).map(cs => [cs.id, cs]));
+  const fullOrder: string[] = inv.fullOrder?.length
+    ? inv.fullOrder
+    : [...builtinOrder, ...(inv.customSections ?? []).map(cs => cs.id)];
 
   const themeVars = {
     "--th-bg": theme.bg, "--th-text": inv.textColor || theme.text,
@@ -75,7 +79,20 @@ export default async function PublicInvitationPage({ params }: Props) {
         <audio src={inv.musicUrl} autoPlay loop style={{ display: "none" }} />
       )}
 
-      {sections.map((key) => {
+      {fullOrder.map((item) => {
+        if (!(ALL_SECTION_KEYS as readonly string[]).includes(item)) {
+          const cs = customSectionsById[item];
+          if (!cs) return null;
+          const csIdx = (inv.customSections ?? []).findIndex(c => c.id === item);
+          return (
+            <section key={item} className="py-12 px-6 text-center" style={{ background: csIdx % 2 === 0 ? "var(--th-card)" : "var(--th-bg)" }}>
+              {cs.title ? <p className="text-xs uppercase tracking-widest opacity-60 mb-4">{cs.title}</p> : null}
+              <p className="mx-auto max-w-2xl text-sm leading-relaxed whitespace-pre-line opacity-90">{cs.content}</p>
+            </section>
+          );
+        }
+        const key = item as SectionKey;
+        if (!enabledSections.includes(key)) return null;
         switch (key) {
           case "hero":
             return (
@@ -222,7 +239,7 @@ export default async function PublicInvitationPage({ params }: Props) {
                 {inv.parishName ? <p className="text-2xl font-semibold">{inv.parishName}</p> : null}
                 {inv.parishTime ? <p className="mt-2 text-sm opacity-70">Hora: {inv.parishTime}</p> : null}
                 {inv.parishMapUrl ? (
-                  <div className="mt-6 rounded-2xl overflow-hidden max-w-3xl mx-auto shadow-lg w-full" style={{ height: 320 }}>
+                  <div className="mt-6 rounded-2xl overflow-hidden max-w-3xl mx-auto shadow-lg w-full" style={{ height: 450 }}>
                     <iframe src={inv.parishMapUrl} className="w-full h-full border-0" title="Ubicacion de la parroquia" loading="lazy" />
                   </div>
                 ) : null}
@@ -237,7 +254,7 @@ export default async function PublicInvitationPage({ params }: Props) {
                 {inv.receptionName ? <p className="text-2xl font-semibold">{inv.receptionName}</p> : null}
                 {inv.receptionTime ? <p className="mt-2 text-sm opacity-70">Hora: {inv.receptionTime}</p> : null}
                 {inv.receptionMapUrl ? (
-                  <div className="mt-6 rounded-2xl overflow-hidden max-w-3xl mx-auto shadow-lg w-full" style={{ height: 320 }}>
+                  <div className="mt-6 rounded-2xl overflow-hidden max-w-3xl mx-auto shadow-lg w-full" style={{ height: 450 }}>
                     <iframe src={inv.receptionMapUrl} className="w-full h-full border-0" title="Ubicacion del salon de recepciones" loading="lazy" />
                   </div>
                 ) : null}
@@ -311,11 +328,13 @@ export default async function PublicInvitationPage({ params }: Props) {
         }
       })}
 
-      <section className="py-14 px-6">
-        <div className="mx-auto max-w-3xl">
-          <CommentsSection invitationId={inv.id} />
-        </div>
-      </section>
+      {inv.commentsEnabled !== false && (
+        <section className="py-14 px-6">
+          <div className="mx-auto max-w-3xl">
+            <CommentsSection invitationId={inv.id} allowPhotos={inv.commentsAllowPhotos !== false} />
+          </div>
+        </section>
+      )}
     </main>
   );
 }

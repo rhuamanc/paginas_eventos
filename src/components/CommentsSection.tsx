@@ -6,6 +6,7 @@ import type { InvitationComment } from "@/types/invitation";
 
 type Props = {
   invitationId: string;
+  allowPhotos?: boolean;
 };
 
 function normalizeDriveImageUrl(url: string) {
@@ -45,7 +46,7 @@ function formatDate(iso: string) {
   }
 }
 
-export default function CommentsSection({ invitationId }: Props) {
+export default function CommentsSection({ invitationId, allowPhotos = true }: Props) {
   const { data: session } = useSession();
   const [comments, setComments] = useState<InvitationComment[]>([]);
   const [text, setText] = useState("");
@@ -223,6 +224,7 @@ export default function CommentsSection({ invitationId }: Props) {
               {/* Barra inferior: ícono foto + estado + enviar */}
               <div className="flex items-center justify-between px-2 pb-2">
                 {/* Botón subir foto */}
+                {allowPhotos ? (
                 <label
                   className={`flex cursor-pointer items-center gap-1.5 rounded-full px-3 py-1.5 text-xs font-semibold transition-colors ${
                     uploading
@@ -247,6 +249,7 @@ export default function CommentsSection({ invitationId }: Props) {
                     }}
                   />
                 </label>
+                ) : <span />}
 
                 <div className="flex items-center gap-2">
                   {/* Cerrar sesion */}

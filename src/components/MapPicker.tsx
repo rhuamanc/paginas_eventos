@@ -18,6 +18,56 @@ function buildEmbedUrl(lat: number, lng: number) {
   return `https://maps.google.com/maps?q=${lat},${lng}&output=embed&z=16`;
 }
 
+function buildEmbedUrlFromName(name: string, lat: number, lng: number) {
+  // Usar nombre del lugar muestra el panel lateral con reseñas e info
+  return `https://maps.google.com/maps?q=${encodeURIComponent(name)}&ll=${lat},${lng}&output=embed&z=17`;
+}
+
+function isEmbedUrl(input: string) {
+  return (
+    input.includes("maps/embed") ||
+    (input.includes("output=embed") && input.includes("google.com"))
+  );
+}
+
+function parseGoogleMapsUrl(input: string): { lat: number; lng: number; name: string } | null {
+  try {
+    const url = new URL(input);
+    if (!url.hostname.includes("google.com")) return null;
+
+    // Formato /@lat,lng,zoom (más común en google.com/maps/place/...)
+    const atMatch = input.match(/@(-?\d+(?:\.\d+)?),(-?\d+(?:\.\d+)?)/);
+    if (atMatch) {
+      const lat = Number(atMatch[1]);
+      const lng = Number(atMatch[2]);
+      if (lat >= -90 && lat <= 90 && lng >= -180 && lng <= 180) {
+        const placeMatch = input.match(/\/maps\/place\/([^/@?]+)/);
+        const name = placeMatch
+          ? decodeURIComponent(placeMatch[1].replace(/\+/g, " "))
+          : "Ubicación de Google Maps";
+        return { lat, lng, name };
+      }
+    }
+
+    // Formato ?q=lat,lng
+    const q = url.searchParams.get("q");
+    if (q) {
+      const qMatch = q.match(/^(-?\d+(?:\.\d+)?),(-?\d+(?:\.\d+)?)$/);
+      if (qMatch) return { lat: Number(qMatch[1]), lng: Number(qMatch[2]), name: "Ubicación de Google Maps" };
+    }
+
+    // Formato ?ll=lat,lng
+    const ll = url.searchParams.get("ll");
+    if (ll) {
+      const llMatch = ll.match(/^(-?\d+(?:\.\d+)?),(-?\d+(?:\.\d+)?)$/);
+      if (llMatch) return { lat: Number(llMatch[1]), lng: Number(llMatch[2]), name: "Ubicación de Google Maps" };
+    }
+  } catch {
+    // No es una URL válida
+  }
+  return null;
+}
+
 function parseCoordinates(input: string): { lat: number; lng: number } | null {
   const normalized = input
     .trim()
@@ -121,6 +171,41 @@ export default function MapPicker({ value, onChange }: Props) {
     const q = query.trim();
     if (!q) return;
 
+    // Si ya es una URL embed, usarla directamente
+    if (isEmbedUrl(q)) {
+      setResults([]);
+      setSelectedAddress("Mapa personalizado");
+      onChange(q, "Mapa personalizado");
+      return;
+    }
+
+    // Detectar URL de Google Maps con lugar
+    const googleCoords = parseGoogleMapsUrl(q);
+    if (googleCoords) {
+      const isNamedPlace = googleCoords.name !== "Ubicación de Google Maps";
+      const address = isNamedPlace
+        ? `${googleCoords.name}`
+        : `${googleCoords.lat.toFixed(5)}, ${googleCoords.lng.toFixed(5)}`;
+      const embedUrl = isNamedPlace
+        ? buildEmbedUrlFromName(googleCoords.name, googleCoords.lat, googleCoords.lng)
+        : buildEmbedUrl(googleCoords.lat, googleCoords.lng);
+
+      setResults([]);
+      setQuery(googleCoords.name);
+
+      // Colocar marcador en el mapa Leaflet (solo visual)
+      if (leafletRef.current) {
+        const { L, map } = leafletRef.current;
+        if (markerRef.current) markerRef.current.remove();
+        markerRef.current = L.marker([googleCoords.lat, googleCoords.lng]).addTo(map).bindPopup(address).openPopup();
+        map.setView([googleCoords.lat, googleCoords.lng], 16);
+      }
+      setCoords({ lat: googleCoords.lat, lng: googleCoords.lng });
+      setSelectedAddress(address);
+      onChange(embedUrl, address);
+      return;
+    }
+
     const parsedCoords = parseCoordinates(q);
     if (parsedCoords) {
       const address = `Coordenadas: ${parsedCoords.lat.toFixed(5)}, ${parsedCoords.lng.toFixed(5)}`;
@@ -175,7 +260,7 @@ export default function MapPicker({ value, onChange }: Props) {
           value={query}
           onChange={(e) => setQuery(e.target.value)}
           onKeyDown={(e) => e.key === "Enter" && void search()}
-          placeholder="Busca lugar o ingresa lat,lng (ej: -12.0464,-77.0428)"
+          placeholder="Busca lugar, pega URL de Google Maps o ingresa lat,lng"
           className="flex-1 rounded-lg border border-gray-200 px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-indigo-300"
         />
         <button
@@ -209,7 +294,7 @@ export default function MapPicker({ value, onChange }: Props) {
       {/* Hint */}
       <p className="text-xs text-gray-400">
         {mapReady
-          ? "Tambien puedes hacer clic en el mapa o buscar por coordenadas (lat,lng)."
+          ? "Puedes hacer clic en el mapa, pegar una URL de Google Maps o buscar por coordenadas (lat,lng)."
           : "Cargando mapa..."}
       </p>
 

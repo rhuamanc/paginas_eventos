@@ -6,6 +6,7 @@ import dynamic from "next/dynamic";
 import ImageUploader from "./ImageUploader";
 import LoadingSpinner from "./LoadingSpinner";
 import type { Invitation, EventType, ThemeStyle, SectionKey, TimelineItem, BulletStyle } from "@/types/invitation";
+import { nanoid } from "nanoid";
 
 const MapPicker = dynamic(() => import("./MapPicker"), {
   ssr: false,
@@ -15,6 +16,10 @@ const MapPicker = dynamic(() => import("./MapPicker"), {
 type DraftInvitation = Omit<Invitation, "id" | "slug" | "ownerId" | "createdAt" | "updatedAt"> & {
   id?: string;
   slug?: string;
+  commentsEnabled: boolean;
+  commentsAllowPhotos: boolean;
+  customSections: Array<{ id: string; title: string; content: string }>;
+  fullOrder: string[];
 };
 
 const ALL_SECTIONS: SectionKey[] = [
@@ -113,6 +118,10 @@ function getDefaultDraft(): DraftInvitation {
     textColor: "",
     sections: [...ALL_SECTIONS],
     sectionOrder: [...ALL_SECTIONS],
+    commentsEnabled: true,
+    commentsAllowPhotos: true,
+    customSections: [],
+    fullOrder: [...ALL_SECTIONS],
   };
 }
 
@@ -289,8 +298,7 @@ function PagePreview({ draft }: { draft: DraftInvitation }) {
   const theme = THEMES[draft.theme] ?? THEMES.elegant;
   const accent = draft.primaryColor || theme.accent;
   const activeGallery = (draft.gallery ?? []).filter(Boolean);
-  const orderedSections = draft.sectionOrder?.length ? draft.sectionOrder : ALL_SECTIONS;
-  const sections = orderedSections.filter((section) => draft.sections.includes(section));
+  const customSectionsById = Object.fromEntries((draft.customSections ?? []).map(cs => [cs.id, cs]));
 
   const style = {
     "--th-bg": theme.bg,
@@ -304,7 +312,19 @@ function PagePreview({ draft }: { draft: DraftInvitation }) {
       className="w-full rounded-2xl overflow-hidden shadow-2xl"
       style={{ ...style, background: "var(--th-bg)", color: "var(--th-text)", fontFamily: "Georgia, serif" }}
     >
-      {sections.map((key) => {
+      {draft.fullOrder.map((item) => {
+        if (!(ALL_SECTIONS as string[]).includes(item)) {
+          const cs = customSectionsById[item];
+          if (!cs?.content) return null;
+          return (
+            <section key={item} className="py-6 px-4 text-center" style={{ background: "var(--th-card)" }}>
+              {cs.title ? <p className="text-xs uppercase tracking-widest opacity-60 mb-2">{cs.title}</p> : null}
+              <p className="text-sm leading-relaxed whitespace-pre-line opacity-90 max-w-xs mx-auto">{cs.content}</p>
+            </section>
+          );
+        }
+        const key = item as SectionKey;
+        if (!draft.sections.includes(key)) return null;
         switch (key) {
           case "hero":
             return (
@@ -545,6 +565,7 @@ function PagePreview({ draft }: { draft: DraftInvitation }) {
       })}
 
       {/* Mockup de seccion de comentarios */}
+      {draft.commentsEnabled !== false && (
       <section className="py-8 px-4" style={{ background: "var(--th-card)" }}>
         <p className="text-xs uppercase tracking-widest opacity-60 text-center mb-4">Comentarios</p>
         <div className="space-y-2 max-w-sm mx-auto">
@@ -562,15 +583,19 @@ function PagePreview({ draft }: { draft: DraftInvitation }) {
           </div>
         </div>
       </section>
+      )}
     </div>
   );
 }
 
 // ----- Section accordion ------------------------------------------------------
 function SectionPanel({
-  sectionKey,
+  id,
+  label,
   enabled,
   onToggle,
+  showToggle = true,
+  onDelete,
   draggable,
   onDragStart,
   onDragOver,
@@ -579,9 +604,12 @@ function SectionPanel({
   isDropTarget,
   children,
 }: {
-  sectionKey: SectionKey;
+  id: string;
+  label: string;
   enabled: boolean;
   onToggle: () => void;
+  showToggle?: boolean;
+  onDelete?: () => void;
   draggable: boolean;
   onDragStart: () => void;
   onDragOver: () => void;
@@ -612,20 +640,37 @@ function SectionPanel({
       >
         <div className="flex items-center gap-3">
           <span className="cursor-grab text-gray-400 active:cursor-grabbing" aria-hidden="true">⋮⋮</span>
-          <button
-            type="button"
-            onClick={(e) => { e.stopPropagation(); onToggle(); }}
-            className={`w-10 h-5 rounded-full transition-colors relative flex-shrink-0 ${enabled ? "bg-indigo-500" : "bg-gray-300"}`}
-          >
-            <span
-              className={`absolute top-0.5 w-4 h-4 rounded-full bg-white shadow transition-transform ${enabled ? "translate-x-5" : "translate-x-0.5"}`}
-            />
-          </button>
-          <span className="text-sm font-medium">{SECTION_LABELS[sectionKey]}</span>
+          {showToggle ? (
+            <button
+              type="button"
+              onClick={(e) => { e.stopPropagation(); onToggle(); }}
+              className={`w-10 h-5 rounded-full transition-colors relative flex-shrink-0 ${enabled ? "bg-indigo-500" : "bg-gray-300"}`}
+            >
+              <span
+                className={`absolute top-0.5 w-4 h-4 rounded-full bg-white shadow transition-transform ${enabled ? "translate-x-5" : "translate-x-0.5"}`}
+              />
+            </button>
+          ) : null}
+          <span className="text-sm font-medium">{label}</span>
         </div>
-        <span className="text-gray-400 text-xs">{open ? "▲" : "▼"}</span>
+        <div className="flex items-center gap-1">
+          {onDelete ? (
+            <button
+              type="button"
+              onClick={(e) => { e.stopPropagation(); onDelete(); }}
+              className="p-1 rounded text-red-400 hover:text-red-600 hover:bg-red-50 transition-colors"
+              title="Eliminar sección"
+              aria-label="Eliminar sección"
+            >
+              <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 20 20" fill="currentColor" className="h-4 w-4">
+                <path fillRule="evenodd" d="M8.75 1A2.75 2.75 0 0 0 6 3.75v.443c-.795.077-1.584.176-2.365.298a.75.75 0 1 0 .23 1.482l.149-.022.841 10.518A2.75 2.75 0 0 0 7.596 19h4.807a2.75 2.75 0 0 0 2.742-2.53l.841-10.52.149.023a.75.75 0 0 0 .23-1.482A41.03 41.03 0 0 0 14 4.193V3.75A2.75 2.75 0 0 0 11.25 1h-2.5ZM10 4c.84 0 1.673.025 2.5.075V3.75c0-.69-.56-1.25-1.25-1.25h-2.5c-.69 0-1.25.56-1.25 1.25v.325C8.327 4.025 9.16 4 10 4ZM8.58 7.72a.75.75 0 0 0-1.5.06l.3 7.5a.75.75 0 1 0 1.5-.06l-.3-7.5Zm4.34.06a.75.75 0 1 0-1.5-.06l-.3 7.5a.75.75 0 1 0 1.5.06l.3-7.5Z" clipRule="evenodd" />
+              </svg>
+            </button>
+          ) : null}
+          <span className="text-gray-400 text-xs px-1">{open ? "▲" : "▼"}</span>
+        </div>
       </div>
-      {open && enabled && (
+      {open && (enabled || !showToggle) && (
         <div className="px-4 pb-4 space-y-3 border-t border-gray-100 pt-3 bg-gray-50">
           {children}
         </div>
@@ -650,8 +695,8 @@ const inputCls = "w-full rounded-lg border border-gray-200 px-3 py-2 text-sm foc
 export default function InvitationEditor({ initial }: { initial?: Invitation }) {
   const router = useRouter();
   const [saving, setSaving] = useState(false);
-  const [draggingSection, setDraggingSection] = useState<SectionKey | null>(null);
-  const [dropTargetSection, setDropTargetSection] = useState<SectionKey | null>(null);
+  const [draggingSection, setDraggingSection] = useState<string | null>(null);
+  const [dropTargetSection, setDropTargetSection] = useState<string | null>(null);
   const [formError, setFormError] = useState<string>("");
 
   const [draft, setDraft] = useState<DraftInvitation>(() => {
@@ -697,6 +742,17 @@ export default function InvitationEditor({ initial }: { initial?: Invitation }) 
       textColor: initial.textColor ?? "",
       sections: (initial.sections ?? [...ALL_SECTIONS]).filter((section) => ALL_SECTIONS.includes(section)),
       sectionOrder: normalizeSectionOrder(initial.sectionOrder ?? initial.sections),
+      commentsEnabled: initial.commentsEnabled ?? true,
+      commentsAllowPhotos: initial.commentsAllowPhotos ?? true,
+      customSections: initial.customSections ?? [],
+      fullOrder: (() => {
+        const baseOrder: string[] = initial.fullOrder?.length
+          ? initial.fullOrder
+          : normalizeSectionOrder(initial.sectionOrder ?? initial.sections);
+        const customIds = (initial.customSections ?? []).map(cs => cs.id);
+        const missingIds = customIds.filter(id => !baseOrder.includes(id));
+        return [...baseOrder, ...missingIds];
+      })(),
     };
   });
 
@@ -722,11 +778,11 @@ export default function InvitationEditor({ initial }: { initial?: Invitation }) 
     });
   }, []);
 
-  const reorderSections = useCallback((fromKey: SectionKey, toKey: SectionKey) => {
+  const reorderSections = useCallback((fromKey: string, toKey: string) => {
     if (fromKey === toKey) return;
 
     setDraft((d) => {
-      const source = d.sectionOrder?.length ? d.sectionOrder : ALL_SECTIONS;
+      const source = d.fullOrder.length ? d.fullOrder : [...ALL_SECTIONS];
       const fromIndex = source.indexOf(fromKey);
       const toIndex = source.indexOf(toKey);
 
@@ -736,7 +792,7 @@ export default function InvitationEditor({ initial }: { initial?: Invitation }) 
 
       return {
         ...d,
-        sectionOrder: moveItem(source, fromIndex, toIndex),
+        fullOrder: moveItem(source, fromIndex, toIndex),
       };
     });
   }, []);
@@ -764,14 +820,42 @@ export default function InvitationEditor({ initial }: { initial?: Invitation }) 
     }));
   };
 
+  const addCustomSection = () => {
+    const id = `custom_${nanoid(8)}`;
+    setDraft((d) => ({
+      ...d,
+      customSections: [...(d.customSections ?? []), { id, title: "", content: "" }],
+      fullOrder: [...(d.fullOrder.length ? d.fullOrder : [...ALL_SECTIONS]), id],
+    }));
+  };
+
+  const updateCustomSection = (id: string, key: "title" | "content", value: string) => {
+    setDraft((d) => ({
+      ...d,
+      customSections: (d.customSections ?? []).map((cs) => cs.id === id ? { ...cs, [key]: value } : cs),
+    }));
+  };
+
+  const removeCustomSection = (id: string) => {
+    setDraft((d) => ({
+      ...d,
+      customSections: (d.customSections ?? []).filter((cs) => cs.id !== id),
+      fullOrder: (d.fullOrder ?? []).filter((item) => item !== id),
+    }));
+  };
+
   const handleSave = async () => {
     setSaving(true);
     setFormError("");
     try {
+      const payload = {
+        ...draft,
+        sectionOrder: draft.fullOrder.filter(item => (ALL_SECTIONS as string[]).includes(item)) as SectionKey[],
+      };
       const res = await fetch("/api/invitations", {
         method: "POST",
         headers: { "Content-Type": "application/json" },
-        body: JSON.stringify(draft),
+        body: JSON.stringify(payload),
       });
       if (!res.ok) {
         let errorMessage = "No se pudo guardar la pagina. Revisa los datos ingresados.";
@@ -817,7 +901,6 @@ export default function InvitationEditor({ initial }: { initial?: Invitation }) 
   };
 
   const publicUrl = draft.slug ? `/i/${draft.slug}` : null;
-  const orderedSections = draft.sectionOrder?.length ? draft.sectionOrder : ALL_SECTIONS;
 
   return (
     <div className="grid gap-4 md:grid-cols-[420px_1fr]" style={{ height: "auto" }}>
@@ -894,32 +977,76 @@ export default function InvitationEditor({ initial }: { initial?: Invitation }) 
           Arrastra las secciones desde el icono de puntos para cambiar el orden en la pagina publica y en la vista previa.
         </div>
 
-        {orderedSections.map((key) => (
-          <SectionPanel
-            key={key}
-            sectionKey={key}
-            enabled={draft.sections.includes(key)}
-            onToggle={() => toggleSection(key)}
-            draggable
-            onDragStart={() => {
-              setDraggingSection(key);
-              setDropTargetSection(null);
-            }}
-            onDragOver={() => {
-              if (draggingSection && draggingSection !== key) {
-                setDropTargetSection(key);
-              }
-            }}
-            onDrop={() => {
-              if (draggingSection) {
-                reorderSections(draggingSection, key);
-              }
-              setDraggingSection(null);
-              setDropTargetSection(null);
-            }}
-            isDragging={draggingSection === key}
-            isDropTarget={dropTargetSection === key}
-          >
+        {draft.fullOrder.map((item) => {
+          const isCustom = !(ALL_SECTIONS as string[]).includes(item);
+          if (isCustom) {
+            const cs = draft.customSections.find(c => c.id === item);
+            if (!cs) return null;
+            return (
+              <SectionPanel
+                key={item}
+                id={item}
+                label={cs.title || "Sección personalizada"}
+                enabled={true}
+                showToggle={false}
+                onToggle={() => {}}
+                onDelete={() => removeCustomSection(item)}
+                draggable
+                onDragStart={() => { setDraggingSection(item); setDropTargetSection(null); }}
+                onDragOver={() => { if (draggingSection && draggingSection !== item) setDropTargetSection(item); }}
+                onDrop={() => { if (draggingSection) reorderSections(draggingSection, item); setDraggingSection(null); setDropTargetSection(null); }}
+                isDragging={draggingSection === item}
+                isDropTarget={dropTargetSection === item}
+              >
+                <Field label="Título de la sección (opcional)">
+                  <input
+                    className={inputCls}
+                    maxLength={120}
+                    value={cs.title}
+                    onChange={(e) => updateCustomSection(item, "title", e.target.value)}
+                    placeholder="Ej: Nota especial, Indicaciones..."
+                  />
+                </Field>
+                <Field label="Contenido">
+                  <textarea
+                    className={`${inputCls} min-h-[80px] resize-y`}
+                    maxLength={2000}
+                    value={cs.content}
+                    onChange={(e) => updateCustomSection(item, "content", e.target.value)}
+                    placeholder="Escribe el mensaje aquí..."
+                  />
+                </Field>
+              </SectionPanel>
+            );
+          }
+          const key = item as SectionKey;
+          return (
+            <SectionPanel
+              key={key}
+              id={key}
+              label={SECTION_LABELS[key]}
+              enabled={draft.sections.includes(key)}
+              onToggle={() => toggleSection(key)}
+              draggable
+              onDragStart={() => {
+                setDraggingSection(key);
+                setDropTargetSection(null);
+              }}
+              onDragOver={() => {
+                if (draggingSection && draggingSection !== key) {
+                  setDropTargetSection(key);
+                }
+              }}
+              onDrop={() => {
+                if (draggingSection) {
+                  reorderSections(draggingSection, key);
+                }
+                setDraggingSection(null);
+                setDropTargetSection(null);
+              }}
+              isDragging={draggingSection === key}
+              isDropTarget={dropTargetSection === key}
+            >
             {key === "hero" && (
               <>
                 <Field label="Titulo principal *">
@@ -1176,7 +1303,46 @@ export default function InvitationEditor({ initial }: { initial?: Invitation }) 
               </Field>
             )}
           </SectionPanel>
-        ))}
+          );
+        })}
+
+        {/* Agregar sección personalizada */}
+        {(draft.customSections ?? []).length < 10 && (
+          <button
+            type="button"
+            onClick={addCustomSection}
+            className="w-full rounded-xl border border-dashed border-gray-300 bg-white py-3 text-sm font-medium text-gray-500 hover:border-indigo-400 hover:text-indigo-600 transition-colors"
+          >
+            + Agregar sección personalizada
+          </button>
+        )}
+
+        {/* Configuracion de comentarios */}
+        <div className="rounded-xl border border-gray-200 bg-white p-4 space-y-3">
+          <h2 className="text-xs font-semibold uppercase tracking-wider text-gray-500">Comentarios</h2>
+          <div className="flex items-center justify-between">
+            <span className="text-sm text-gray-700">Mostrar sección de comentarios</span>
+            <button
+              type="button"
+              onClick={() => set("commentsEnabled", !draft.commentsEnabled)}
+              className={`w-10 h-5 rounded-full transition-colors relative flex-shrink-0 ${draft.commentsEnabled ? "bg-indigo-500" : "bg-gray-300"}`}
+            >
+              <span className={`absolute top-0.5 w-4 h-4 rounded-full bg-white shadow transition-transform ${draft.commentsEnabled ? "translate-x-5" : "translate-x-0.5"}`} />
+            </button>
+          </div>
+          {draft.commentsEnabled && (
+            <div className="flex items-center justify-between">
+              <span className="text-sm text-gray-700">Permitir fotos en comentarios</span>
+              <button
+                type="button"
+                onClick={() => set("commentsAllowPhotos", !draft.commentsAllowPhotos)}
+                className={`w-10 h-5 rounded-full transition-colors relative flex-shrink-0 ${draft.commentsAllowPhotos ? "bg-indigo-500" : "bg-gray-300"}`}
+              >
+                <span className={`absolute top-0.5 w-4 h-4 rounded-full bg-white shadow transition-transform ${draft.commentsAllowPhotos ? "translate-x-5" : "translate-x-0.5"}`} />
+              </button>
+            </div>
+          )}
+        </div>
 
         {/* Save */}
         <div className="rounded-xl border border-gray-200 bg-white p-4 space-y-3">
