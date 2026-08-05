@@ -92,6 +92,8 @@ export async function upsertInvitation(input: Partial<Invitation> & { title: str
     commentsAllowPhotos: input.commentsAllowPhotos ?? true,
     customSections: input.customSections ?? [],
     fullOrder: input.fullOrder ?? [],
+    tableAssignments: input.tableAssignments ?? [],
+    tablePdfUrl: input.tablePdfUrl ?? "",
     createdAt: (existing as unknown as Invitation)?.createdAt ?? now,
     updatedAt: now,
   };
@@ -162,6 +164,8 @@ export async function upsertInvitationForOwner(
     commentsAllowPhotos: input.commentsAllowPhotos ?? true,
     customSections: input.customSections ?? [],
     fullOrder: input.fullOrder ?? [],
+    tableAssignments: input.tableAssignments ?? [],
+    tablePdfUrl: input.tablePdfUrl ?? "",
     createdAt: (existing as unknown as Invitation)?.createdAt ?? now,
     updatedAt: now,
   };

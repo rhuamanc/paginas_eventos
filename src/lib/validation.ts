@@ -1,6 +1,6 @@
 import { z } from "zod";
 
-const sectionKeySchema = z.enum(["hero", "details", "countdown", "timeline", "parents", "godparents", "witnesses", "parish", "reception", "gallery", "message", "giftTable", "dressCode", "rsvp", "music"]);
+const sectionKeySchema = z.enum(["hero", "details", "countdown", "timeline", "parents", "godparents", "witnesses", "parish", "reception", "gallery", "message", "giftTable", "dressCode", "rsvp", "music", "tables"]);
 const bulletStyleSchema = z.enum(["dot", "circle", "square", "dash"]);
 const timelineItemSchema = z.object({
   time: z.string().min(1, "La hora del timeline es obligatoria.").max(40, "La hora del timeline no puede superar 40 caracteres."),
@@ -40,6 +40,12 @@ export const invitationSchema = z.object({
   dressCodeMen: z.string().max(120, "Dress code caballeros no puede superar 120 caracteres.").optional(),
   dressCodeWomen: z.string().max(120, "Dress code damas no puede superar 120 caracteres.").optional(),
   musicUrl: z.string().max(500, "La URL de musica no puede superar 500 caracteres.").optional(),
+  tableAssignments: z.array(z.object({
+    dni: z.string().max(20, "DNI invalido."),
+    name: z.string().max(200, "El nombre no puede superar 200 caracteres."),
+    tableNumber: z.string().max(20, "Numero de mesa invalido."),
+  })).max(2000, "Maximo 2000 invitados.").default([]),
+  tablePdfUrl: z.string().max(1000, "URL del PDF invalida.").optional(),
   gallery: z.array(z.string().max(5_000_000)).max(20).default([]),
   theme: z.enum(["elegant", "romantic", "modern", "floral"]).default("elegant"),
   primaryColor: z.string().max(32, "Color principal invalido.").optional(),

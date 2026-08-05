@@ -21,7 +21,8 @@ export type SectionKey =
   | "giftTable"
   | "dressCode"
   | "rsvp"
-  | "music";
+  | "music"
+  | "tables";
 
 export type Invitation = {
   id: string;
@@ -68,6 +69,9 @@ export type Invitation = {
   dressCodeWomen?: string;
   // Music
   musicUrl?: string;
+  // Tables
+  tableAssignments?: Array<{ dni: string; name: string; tableNumber: string }>;
+  tablePdfUrl?: string;
   // Custom sections
   customSections?: Array<{ id: string; title: string; content: string }>;
   // Comments settings

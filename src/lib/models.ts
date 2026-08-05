@@ -1,7 +1,7 @@
 import mongoose, { Schema, model, models } from "mongoose";
 import type { AppUser, Invitation, InvitationComment, RSVP } from "@/types/invitation";
 
-const SECTION_KEYS = ["hero", "details", "countdown", "timeline", "parents", "godparents", "witnesses", "parish", "reception", "gallery", "message", "giftTable", "dressCode", "rsvp", "music"];
+const SECTION_KEYS = ["hero", "details", "countdown", "timeline", "parents", "godparents", "witnesses", "parish", "reception", "gallery", "message", "giftTable", "dressCode", "rsvp", "music", "tables"];
 
 const InvitationSchema = new Schema<Invitation>(
   {
@@ -47,6 +47,8 @@ const InvitationSchema = new Schema<Invitation>(
     commentsAllowPhotos: { type: Boolean, default: true },
     customSections: [{ id: String, title: String, content: String }],
     fullOrder: [String],
+    tableAssignments: [{ dni: String, name: String, tableNumber: String }],
+    tablePdfUrl: String,
     createdAt: String,
     updatedAt: String,
   },
@@ -132,6 +134,8 @@ export const InvitationModel =
           commentsAllowPhotos: { type: Boolean, default: true },
           customSections: [{ id: String, title: String, content: String }],
           fullOrder: [String],
+          tableAssignments: [{ dni: String, name: String, tableNumber: String }],
+          tablePdfUrl: String,
         });
       }
       return existing;

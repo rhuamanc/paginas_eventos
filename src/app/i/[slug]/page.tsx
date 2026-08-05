@@ -3,6 +3,7 @@ import { getInvitationBySlug } from "@/lib/storage";
 import Countdown from "@/components/Countdown";
 import RsvpForm from "@/components/RsvpForm";
 import CommentsSection from "@/components/CommentsSection";
+import TableLookup from "@/components/TableLookup";
 import type { Invitation, SectionKey, BulletStyle } from "@/types/invitation";
 
 export const dynamic = "force-dynamic";
@@ -56,7 +57,7 @@ export default async function PublicInvitationPage({ params }: Props) {
 
   const theme = THEMES[inv.theme as keyof typeof THEMES] ?? THEMES.elegant;
   const accent = inv.primaryColor || theme.accent;
-  const ALL_SECTION_KEYS = ["hero", "details", "countdown", "timeline", "parents", "godparents", "witnesses", "parish", "reception", "gallery", "message", "giftTable", "dressCode", "rsvp", "music"] as const;
+  const ALL_SECTION_KEYS = ["hero", "details", "countdown", "timeline", "parents", "godparents", "witnesses", "parish", "reception", "gallery", "message", "giftTable", "dressCode", "rsvp", "music", "tables"] as const;
   const builtinOrder: SectionKey[] = inv.sectionOrder?.length
     ? inv.sectionOrder
     : [...ALL_SECTION_KEYS];
@@ -319,6 +320,24 @@ export default async function PublicInvitationPage({ params }: Props) {
                 <RsvpForm invitationId={inv.id} />
               </section>
             );
+
+          case "tables": {
+            const hasRows = (inv.tableAssignments?.length ?? 0) > 0;
+            const hasPdf = !!inv.tablePdfUrl;
+            if (!hasRows && !hasPdf) return null;
+            return (
+              <section key="tables" className="py-14 px-6 text-center">
+                <p className="text-xs uppercase tracking-widest opacity-60 mb-6">Asignación de mesas</p>
+                <div className="mx-auto max-w-sm">
+                  <TableLookup
+                    rows={inv.tableAssignments ?? []}
+                    pdfUrl={inv.tablePdfUrl}
+                    accentColor={accent}
+                  />
+                </div>
+              </section>
+            );
+          }
 
           case "music":
             return null;

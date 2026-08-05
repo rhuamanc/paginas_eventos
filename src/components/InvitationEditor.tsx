@@ -8,6 +8,8 @@ import LoadingSpinner from "./LoadingSpinner";
 import type { Invitation, EventType, ThemeStyle, SectionKey, TimelineItem, BulletStyle } from "@/types/invitation";
 import { nanoid } from "nanoid";
 
+const TableAssignmentEditor = dynamic(() => import("./TableAssignmentEditor"), { ssr: false });
+
 const MapPicker = dynamic(() => import("./MapPicker"), {
   ssr: false,
   loading: () => <p className="text-xs text-gray-400">Cargando mapa...</p>,
@@ -20,10 +22,12 @@ type DraftInvitation = Omit<Invitation, "id" | "slug" | "ownerId" | "createdAt" 
   commentsAllowPhotos: boolean;
   customSections: Array<{ id: string; title: string; content: string }>;
   fullOrder: string[];
+  tableAssignments: Array<{ dni: string; name: string; tableNumber: string }>;
+  tablePdfUrl: string;
 };
 
 const ALL_SECTIONS: SectionKey[] = [
-  "hero", "details", "countdown", "timeline", "parents", "godparents", "witnesses", "parish", "reception", "gallery", "message", "giftTable", "dressCode", "rsvp", "music",
+  "hero", "details", "countdown", "timeline", "parents", "godparents", "witnesses", "parish", "reception", "gallery", "message", "giftTable", "dressCode", "rsvp", "music", "tables",
 ];
 
 const SECTION_LABELS: Record<SectionKey, string> = {
@@ -42,6 +46,7 @@ const SECTION_LABELS: Record<SectionKey, string> = {
   dressCode: "Dress code",
   rsvp: "Formulario RSVP",
   music: "Musica de fondo",
+  tables: "Asignación de mesas",
 };
 
 const THEMES: Record<ThemeStyle, { label: string; bg: string; text: string; accent: string; card: string }> = {
@@ -116,12 +121,14 @@ function getDefaultDraft(): DraftInvitation {
     theme: "romantic",
     primaryColor: "#d4608a",
     textColor: "",
-    sections: [...ALL_SECTIONS],
-    sectionOrder: [...ALL_SECTIONS],
+    sections: [...ALL_SECTIONS].filter(s => s !== "tables"),
+    sectionOrder: [...ALL_SECTIONS].filter(s => s !== "tables"),
     commentsEnabled: true,
     commentsAllowPhotos: true,
     customSections: [],
     fullOrder: [...ALL_SECTIONS],
+    tableAssignments: [],
+    tablePdfUrl: "",
   };
 }
 
@@ -551,6 +558,19 @@ function PagePreview({ draft }: { draft: DraftInvitation }) {
               </section>
             );
 
+          case "tables":
+            return (
+              <section key="tables" className="py-8 px-4 text-center">
+                <p className="text-xs uppercase tracking-widest opacity-60 mb-3">Asignación de mesas</p>
+                <div className="mx-auto max-w-xs space-y-2">
+                  <div className="h-8 rounded-xl bg-white/20 flex items-center px-3 gap-2">
+                    <div className="h-3 w-3/4 rounded bg-white/30" />
+                  </div>
+                  <div className="h-8 rounded-xl opacity-60" style={{ background: accent }} />
+                </div>
+              </section>
+            );
+
           case "music":
             if (!draft.musicUrl) return null;
             return (
@@ -749,10 +769,14 @@ export default function InvitationEditor({ initial }: { initial?: Invitation }) 
         const baseOrder: string[] = initial.fullOrder?.length
           ? initial.fullOrder
           : normalizeSectionOrder(initial.sectionOrder ?? initial.sections);
+        // Asegurar que 'tables' siempre esté en el order (puede estar deshabilitado)
+        if (!baseOrder.includes("tables")) baseOrder.push("tables");
         const customIds = (initial.customSections ?? []).map(cs => cs.id);
         const missingIds = customIds.filter(id => !baseOrder.includes(id));
         return [...baseOrder, ...missingIds];
       })(),
+      tableAssignments: initial.tableAssignments ?? [],
+      tablePdfUrl: initial.tablePdfUrl ?? "",
     };
   });
 
@@ -1301,6 +1325,14 @@ export default function InvitationEditor({ initial }: { initial?: Invitation }) 
               <Field label="URL del audio de fondo (MP3/OGG)">
                 <input className={inputCls} value={draft.musicUrl ?? ""} onChange={(e) => set("musicUrl", e.target.value)} placeholder="https://example.com/cancion.mp3" />
               </Field>
+            )}
+            {key === "tables" && (
+              <TableAssignmentEditor
+                rows={draft.tableAssignments}
+                pdfUrl={draft.tablePdfUrl}
+                onChangeRows={(rows) => set("tableAssignments", rows)}
+                onChangePdf={(url) => set("tablePdfUrl", url)}
+              />
             )}
           </SectionPanel>
           );
