@@ -50,6 +50,8 @@ export const invitationSchema = z.object({
   theme: z.enum(["elegant", "romantic", "modern", "floral"]).default("elegant"),
   primaryColor: z.string().max(32, "Color principal invalido.").optional(),
   textColor: z.string().max(32, "Color de texto invalido.").optional(),
+  fontFamily: z.string().max(80).optional(),
+  fontSize: z.string().max(10).optional(),
   sections: z.array(sectionKeySchema).default(["hero", "details", "countdown", "timeline", "parents", "godparents", "witnesses", "parish", "reception", "gallery", "message", "giftTable", "dressCode", "rsvp", "music"]),
   sectionOrder: z.array(sectionKeySchema).default(["hero", "details", "countdown", "timeline", "parents", "godparents", "witnesses", "parish", "reception", "gallery", "message", "giftTable", "dressCode", "rsvp", "music"]),
   commentsEnabled: z.boolean().default(true),

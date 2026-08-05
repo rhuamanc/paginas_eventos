@@ -83,6 +83,8 @@ export type Invitation = {
   theme: ThemeStyle;
   primaryColor?: string;
   textColor?: string;
+  fontFamily?: string;
+  fontSize?: string;
   // Sections enabled
   sections: SectionKey[];
   // Full section order, including disabled sections

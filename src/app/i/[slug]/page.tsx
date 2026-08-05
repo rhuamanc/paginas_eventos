@@ -75,7 +75,7 @@ export default async function PublicInvitationPage({ params }: Props) {
   } as React.CSSProperties;
 
   return (
-    <main style={{ ...themeVars, background: "var(--th-bg)", color: "var(--th-text)", fontFamily: "Georgia,serif", minHeight: "100vh" }}>
+    <main style={{ ...themeVars, background: "var(--th-bg)", color: "var(--th-text)", fontFamily: inv.fontFamily || "Georgia,serif", zoom: inv.fontSize ? Number(inv.fontSize) : undefined, minHeight: "100vh" }}>
       {inv.musicUrl && (
         <audio src={inv.musicUrl} autoPlay loop style={{ display: "none" }} />
       )}

@@ -3,6 +3,7 @@
 import { useState, useCallback } from "react";
 import { useRouter } from "next/navigation";
 import dynamic from "next/dynamic";
+import FontPicker from "./FontPicker";
 import ImageUploader from "./ImageUploader";
 import LoadingSpinner from "./LoadingSpinner";
 import type { Invitation, EventType, ThemeStyle, SectionKey, TimelineItem, BulletStyle } from "@/types/invitation";
@@ -24,6 +25,8 @@ type DraftInvitation = Omit<Invitation, "id" | "slug" | "ownerId" | "createdAt" 
   fullOrder: string[];
   tableAssignments: Array<{ dni: string; name: string; tableNumber: string }>;
   tablePdfUrl: string;
+  fontFamily: string;
+  fontSize: string;
 };
 
 const ALL_SECTIONS: SectionKey[] = [
@@ -121,6 +124,8 @@ function getDefaultDraft(): DraftInvitation {
     theme: "romantic",
     primaryColor: "#d4608a",
     textColor: "",
+    fontFamily: "",
+    fontSize: "",
     sections: [...ALL_SECTIONS].filter(s => s !== "tables"),
     sectionOrder: [...ALL_SECTIONS].filter(s => s !== "tables"),
     commentsEnabled: true,
@@ -314,10 +319,13 @@ function PagePreview({ draft }: { draft: DraftInvitation }) {
     "--th-card": theme.card,
   } as React.CSSProperties;
 
+  const fontFamily = draft.fontFamily || "Georgia, serif";
+  const zoom = draft.fontSize ? Number(draft.fontSize) : undefined;
+
   return (
     <div
       className="w-full rounded-2xl overflow-hidden shadow-2xl"
-      style={{ ...style, background: "var(--th-bg)", color: "var(--th-text)", fontFamily: "Georgia, serif" }}
+      style={{ ...style, background: "var(--th-bg)", color: "var(--th-text)", fontFamily, zoom }}
     >
       {draft.fullOrder.map((item) => {
         if (!(ALL_SECTIONS as string[]).includes(item)) {
@@ -760,6 +768,8 @@ export default function InvitationEditor({ initial }: { initial?: Invitation }) 
       theme: initial.theme ?? "elegant",
       primaryColor: initial.primaryColor ?? "",
       textColor: initial.textColor ?? "",
+      fontFamily: initial.fontFamily ?? "",
+      fontSize: initial.fontSize ?? "",
       sections: (initial.sections ?? [...ALL_SECTIONS]).filter((section) => ALL_SECTIONS.includes(section)),
       sectionOrder: normalizeSectionOrder(initial.sectionOrder ?? initial.sections),
       commentsEnabled: initial.commentsEnabled ?? true,
@@ -950,14 +960,6 @@ export default function InvitationEditor({ initial }: { initial?: Invitation }) 
               </button>
             ))}
           </div>
-          <Field label="Color de acento">
-            <input
-              type="color"
-              value={draft.primaryColor || THEMES[draft.theme]?.accent || "#c9a84c"}
-              onChange={(e) => set("primaryColor", e.target.value)}
-              className="w-10 h-8 rounded cursor-pointer border"
-            />
-          </Field>
           <Field label="Color de texto">
             <div className="flex items-center gap-2">
               <input
@@ -978,6 +980,12 @@ export default function InvitationEditor({ initial }: { initial?: Invitation }) 
                 <span className="text-xs text-gray-400">Usa el color del tema</span>
               )}
             </div>
+          </Field>
+          <Field label="Tipo de fuente">
+            <FontPicker
+              value={draft.fontFamily || ""}
+              onChange={(val) => set("fontFamily", val)}
+            />
           </Field>
         </div>
 

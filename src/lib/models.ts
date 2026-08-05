@@ -41,6 +41,8 @@ const InvitationSchema = new Schema<Invitation>(
     theme: { type: String, enum: ["elegant", "romantic", "modern", "floral"], default: "elegant" },
     primaryColor: String,
     textColor: String,
+    fontFamily: String,
+    fontSize: String,
     sections: [{ type: String, enum: SECTION_KEYS }],
     sectionOrder: [{ type: String, enum: SECTION_KEYS }],
     commentsEnabled: { type: Boolean, default: true },
@@ -136,6 +138,12 @@ export const InvitationModel =
           fullOrder: [String],
           tableAssignments: [{ dni: String, name: String, tableNumber: String }],
           tablePdfUrl: String,
+        });
+      }
+      if (!existing.schema.path("fontFamily")) {
+        existing.schema.add({
+          fontFamily: String,
+          fontSize: String,
         });
       }
       return existing;
