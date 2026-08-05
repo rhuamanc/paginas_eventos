@@ -29,6 +29,7 @@ export type Invitation = {
   ownerId: string;
   slug: string;
   eventType: EventType;
+  eventTypeLabel?: string;
   // Hero
   title: string;
   subtitle?: string;

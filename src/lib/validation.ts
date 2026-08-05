@@ -12,6 +12,7 @@ export const invitationSchema = z.object({
   id: z.string().optional(),
   slug: z.string().optional(),
   eventType: z.enum(["boda", "cumpleanos", "baby-shower", "graduacion", "otro"]),
+  eventTypeLabel: z.string().max(80).optional(),
   title: z.string().min(1, "El titulo es obligatorio.").max(120, "El titulo no puede superar 120 caracteres."),
   subtitle: z.string().max(200, "El subtitulo no puede superar 200 caracteres.").optional(),
   heroImage: z.string().max(5_000_000, "La URL de portada es demasiado larga.").optional(),

@@ -9,6 +9,7 @@ const InvitationSchema = new Schema<Invitation>(
     ownerId: { type: String, required: true, index: true },
     slug: { type: String, required: true, unique: true },
     eventType: { type: String, enum: ["boda", "cumpleanos", "baby-shower", "graduacion", "otro"] },
+    eventTypeLabel: String,
     title: String,
     subtitle: String,
     heroImage: String,
@@ -145,6 +146,9 @@ export const InvitationModel =
           fontFamily: String,
           fontSize: String,
         });
+      }
+      if (!existing.schema.path("eventTypeLabel")) {
+        existing.schema.add({ eventTypeLabel: String });
       }
       return existing;
     }

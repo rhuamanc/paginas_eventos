@@ -104,7 +104,7 @@ export default async function PublicInvitationPage({ params }: Props) {
                     : `linear-gradient(135deg,var(--th-card),var(--th-bg))`,
                   color: inv.heroImage ? "#fff" : "var(--th-text)",
                 }}>
-                <p className="text-sm uppercase tracking-[0.3em] mb-4 opacity-70">{EVENT_LABELS[inv.eventType] ?? inv.eventType}</p>
+                <p className="text-sm uppercase tracking-[0.3em] mb-4 opacity-70">{inv.eventTypeLabel || (EVENT_LABELS[inv.eventType] ?? inv.eventType)}</p>
                 <h1 className="text-5xl md:text-6xl font-bold mb-4 leading-tight">{inv.title}</h1>
                 {inv.subtitle && <p className="text-xl opacity-80 max-w-lg whitespace-pre-line">{inv.subtitle}</p>}
               </section>

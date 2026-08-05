@@ -19,6 +19,7 @@ const MapPicker = dynamic(() => import("./MapPicker"), {
 type DraftInvitation = Omit<Invitation, "id" | "slug" | "ownerId" | "createdAt" | "updatedAt"> & {
   id?: string;
   slug?: string;
+  eventTypeLabel: string;
   commentsEnabled: boolean;
   commentsAllowPhotos: boolean;
   customSections: Array<{ id: string; title: string; content: string }>;
@@ -124,6 +125,7 @@ function getDefaultDraft(): DraftInvitation {
     theme: "romantic",
     primaryColor: "#d4608a",
     textColor: "",
+    eventTypeLabel: "",
     fontFamily: "",
     fontSize: "",
     sections: [...ALL_SECTIONS].filter(s => s !== "tables"),
@@ -353,7 +355,7 @@ function PagePreview({ draft }: { draft: DraftInvitation }) {
                   color: draft.heroImage ? "#fff" : "var(--th-text)",
                 }}
               >
-                <p className="text-xs uppercase tracking-widest mb-2 opacity-70">{EVENT_LABELS[draft.eventType]}</p>
+                <p className="text-xs uppercase tracking-widest mb-2 opacity-70">{draft.eventTypeLabel || EVENT_LABELS[draft.eventType]}</p>
                 <h1 className="text-3xl font-bold mb-2">{draft.title || "Titulo del evento"}</h1>
                 {draft.subtitle && <p className="text-base opacity-80 max-w-xs whitespace-pre-line">{draft.subtitle}</p>}
               </section>
@@ -736,6 +738,7 @@ export default function InvitationEditor({ initial }: { initial?: Invitation }) 
       id: initial.id,
       slug: initial.slug,
       eventType: initial.eventType ?? "boda",
+      eventTypeLabel: initial.eventTypeLabel ?? "",
       title: initial.title ?? "",
       subtitle: initial.subtitle ?? "",
       heroImage: initial.heroImage ?? "",
@@ -994,13 +997,28 @@ export default function InvitationEditor({ initial }: { initial?: Invitation }) 
           <Field label="Tipo de evento">
             <select
               value={draft.eventType}
-              onChange={(e) => set("eventType", e.target.value as EventType)}
+              onChange={(e) => {
+                set("eventType", e.target.value as EventType);
+                // Solo resetear label si el usuario no había personalizado nada
+                if (!draft.eventTypeLabel) set("eventTypeLabel", "");
+              }}
               className={inputCls}
             >
               {(Object.keys(EVENT_LABELS) as EventType[]).map((k) => (
                 <option key={k} value={k}>{EVENT_LABELS[k]}</option>
               ))}
             </select>
+          </Field>
+          <Field label="Etiqueta personalizada (opcional)">
+            <input
+              type="text"
+              maxLength={80}
+              className={inputCls}
+              placeholder={EVENT_LABELS[draft.eventType]}
+              value={draft.eventTypeLabel}
+              onChange={(e) => set("eventTypeLabel", e.target.value)}
+            />
+            <span className="text-xs text-gray-400 mt-1 block">Deja en blanco para usar el nombre del tipo seleccionado.</span>
           </Field>
         </div>
 
