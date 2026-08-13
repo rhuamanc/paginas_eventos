@@ -20,7 +20,7 @@ export default function BackgroundMusic({ musicUrl }: { musicUrl: string }) {
   const iframeRef = useRef<HTMLIFrameElement>(null);
   const ytId = getYouTubeId(musicUrl);
 
-  // Intentar autoplay para audio directo al montar
+  // Para audio directo: intentar autoplay al montar
   useEffect(() => {
     if (!ytId && audioRef.current) {
       audioRef.current.play().then(() => setPlaying(true)).catch(() => {});
@@ -57,22 +57,24 @@ export default function BackgroundMusic({ musicUrl }: { musicUrl: string }) {
   return (
     <>
       {ytId ? (
+        /* Sin onLoad ni autoplay=1 en la URL: el usuario siempre inicia con el botón.
+           El iframe necesita estar en el viewport (aunque sea 1px) para que el postMessage funcione. */
         <iframe
           ref={iframeRef}
-          src={`https://www.youtube.com/embed/${ytId}?autoplay=1&loop=1&playlist=${ytId}&controls=0&enablejsapi=1`}
-          allow="autoplay"
+          src={`https://www.youtube.com/embed/${ytId}?enablejsapi=1&loop=1&playlist=${ytId}&controls=0`}
+          allow="autoplay; encrypted-media"
           title="Música de fondo"
           style={{
-            position: "absolute",
+            position: "fixed",
             top: 0,
             left: 0,
             width: "1px",
             height: "1px",
-            opacity: 0,
+            opacity: 0.01,
             pointerEvents: "none",
             border: "none",
+            zIndex: -1,
           }}
-          onLoad={() => setPlaying(true)}
         />
       ) : (
         <audio ref={audioRef} src={musicUrl} loop style={{ display: "none" }} />
