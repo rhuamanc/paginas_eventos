@@ -15,6 +15,117 @@ function getYouTubeId(url: string): string | null {
 }
 
 export default function BackgroundMusic({ musicUrl }: { musicUrl: string }) {
+  const [playing, setPlaying] = useState(false);
+  const audioRef = useRef<HTMLAudioElement>(null);
+  const iframeRef = useRef<HTMLIFrameElement>(null);
+  const ytId = getYouTubeId(musicUrl);
+
+  const sendYT = (func: string) => {
+    iframeRef.current?.contentWindow?.postMessage(
+      JSON.stringify({ event: "command", func, args: [] }),
+      "*"
+    );
+  };
+
+  // Cuando el iframe termina de cargar: intentar desmutear (autoplay muted ya arrancó)
+  const handleIframeLoad = () => {
+    // Pequeño delay para que el player de YT esté listo
+    setTimeout(() => {
+      sendYT("unMute");
+      sendYT("setVolume"); // workaround para algunos navegadores
+      setPlaying(true);
+    }, 800);
+  };
+
+  const toggle = () => {
+    if (ytId) {
+      sendYT(playing ? "pauseVideo" : "playVideo");
+      if (!playing) sendYT("unMute");
+    } else if (audioRef.current) {
+      playing ? audioRef.current.pause() : audioRef.current.play().catch(() => {});
+    }
+    setPlaying((p) => !p);
+  };
+
+  return (
+    <>
+      {ytId ? (
+        <iframe
+          ref={iframeRef}
+          /* autoplay=1&mute=1 está permitido por los navegadores;
+             luego onLoad intenta desmutear automáticamente */
+          src={`https://www.youtube.com/embed/${ytId}?autoplay=1&mute=1&loop=1&playlist=${ytId}&controls=0&enablejsapi=1`}
+          allow="autoplay; encrypted-media"
+          title="Música de fondo"
+          onLoad={handleIframeLoad}
+          style={{
+            position: "fixed",
+            top: 0,
+            left: 0,
+            width: "1px",
+            height: "1px",
+            opacity: 0.01,
+            pointerEvents: "none",
+            border: "none",
+            zIndex: -1,
+          }}
+        />
+      ) : (
+        <audio
+          ref={audioRef}
+          src={musicUrl}
+          loop
+          autoPlay
+          style={{ display: "none" }}
+          onPlay={() => setPlaying(true)}
+        />
+      )}
+
+      {/* Botón flotante — siempre visible para que el usuario pueda iniciar si el navegador bloqueó */}
+      <button
+        onClick={toggle}
+        title={playing ? "Pausar música" : "Reproducir música"}
+        style={{
+          position: "fixed",
+          bottom: "1.5rem",
+          right: "1.5rem",
+          zIndex: 50,
+          width: "2.75rem",
+          height: "2.75rem",
+          borderRadius: "50%",
+          background: "rgba(0,0,0,0.55)",
+          color: "#fff",
+          border: "2px solid rgba(255,255,255,0.25)",
+          cursor: "pointer",
+          fontSize: "1.15rem",
+          display: "flex",
+          alignItems: "center",
+          justifyContent: "center",
+          backdropFilter: "blur(6px)",
+          transition: "background 0.2s",
+        }}
+      >
+        {playing ? "⏸" : "♫"}
+      </button>
+    </>
+  );
+}
+
+
+function getYouTubeId(url: string): string | null {
+  const patterns = [
+    /[?&]v=([a-zA-Z0-9_-]{11})/,
+    /youtu\.be\/([a-zA-Z0-9_-]{11})/,
+    /youtube\.com\/embed\/([a-zA-Z0-9_-]{11})/,
+  ];
+  for (const p of patterns) {
+    const m = url.match(p);
+    if (m) return m[1];
+  }
+  return null;
+}
+
+export default function BackgroundMusic({ musicUrl }: { musicUrl: string }) {
   const [entered, setEntered] = useState(false);
   const [playing, setPlaying] = useState(false);
   const audioRef = useRef<HTMLAudioElement>(null);
