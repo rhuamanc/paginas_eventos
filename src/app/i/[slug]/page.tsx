@@ -5,6 +5,7 @@ import RsvpForm from "@/components/RsvpForm";
 import CommentsSection from "@/components/CommentsSection";
 import TableLookup from "@/components/TableLookup";
 import type { Invitation, SectionKey, BulletStyle } from "@/types/invitation";
+import BackgroundMusic from "@/components/BackgroundMusic";
 
 export const dynamic = "force-dynamic";
 
@@ -76,9 +77,7 @@ export default async function PublicInvitationPage({ params }: Props) {
 
   return (
     <main style={{ ...themeVars, background: "var(--th-bg)", color: "var(--th-text)", fontFamily: inv.fontFamily || "Georgia,serif", zoom: inv.fontSize ? Number(inv.fontSize) : undefined, minHeight: "100vh" }}>
-      {inv.musicUrl && (
-        <audio src={inv.musicUrl} autoPlay loop style={{ display: "none" }} />
-      )}
+      {inv.musicUrl && <BackgroundMusic musicUrl={inv.musicUrl} />}
 
       {fullOrder.map((item) => {
         if (!(ALL_SECTION_KEYS as readonly string[]).includes(item)) {

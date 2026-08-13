@@ -1349,7 +1349,8 @@ export default function InvitationEditor({ initial }: { initial?: Invitation }) 
             )}
             {key === "music" && (
               <Field label="URL del audio de fondo (MP3/OGG)">
-                <input className={inputCls} value={draft.musicUrl ?? ""} onChange={(e) => set("musicUrl", e.target.value)} placeholder="https://example.com/cancion.mp3" />
+                <input className={inputCls} value={draft.musicUrl ?? ""} onChange={(e) => set("musicUrl", e.target.value)} placeholder="https://youtu.be/ID o https://example.com/cancion.mp3" />
+                <span className="text-xs text-gray-400 mt-1 block">Acepta URLs de YouTube o enlaces directos a MP3/OGG.</span>
               </Field>
             )}
             {key === "tables" && (
