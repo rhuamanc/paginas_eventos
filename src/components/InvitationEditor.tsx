@@ -6,6 +6,7 @@ import dynamic from "next/dynamic";
 import FontPicker from "./FontPicker";
 import ImageUploader from "./ImageUploader";
 import LoadingSpinner from "./LoadingSpinner";
+import BackgroundMusic from "./BackgroundMusic";
 import type { Invitation, EventType, ThemeStyle, SectionKey, TimelineItem, BulletStyle } from "@/types/invitation";
 import { nanoid } from "nanoid";
 
@@ -323,12 +324,14 @@ function PagePreview({ draft }: { draft: DraftInvitation }) {
 
   const fontFamily = draft.fontFamily || "Georgia, serif";
   const zoom = draft.fontSize ? Number(draft.fontSize) : undefined;
+  const musicEnabled = draft.sections.includes("music") && !!draft.musicUrl;
 
   return (
     <div
       className="w-full rounded-2xl overflow-hidden shadow-2xl"
-      style={{ ...style, background: "var(--th-bg)", color: "var(--th-text)", fontFamily, zoom }}
+      style={{ ...style, background: "var(--th-bg)", color: "var(--th-text)", fontFamily, zoom, position: "relative" }}
     >
+      {musicEnabled && <BackgroundMusic key={draft.musicUrl} musicUrl={draft.musicUrl!} />}
       {draft.fullOrder.map((item) => {
         if (!(ALL_SECTIONS as string[]).includes(item)) {
           const cs = customSectionsById[item];
@@ -585,7 +588,7 @@ function PagePreview({ draft }: { draft: DraftInvitation }) {
             if (!draft.musicUrl) return null;
             return (
               <section key="music" className="py-4 px-6 text-center text-xs opacity-60">
-                ♫ Musica de fondo activa
+                ♫ Musica activa — usa el boton ♫ para escuchar
               </section>
             );
 
