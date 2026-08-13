@@ -1,4 +1,4 @@
-"use client";
+ï»¿"use client";
 import { useState, useRef } from "react";
 
 function getYouTubeId(url: string): string | null {
@@ -42,7 +42,12 @@ export default function BackgroundMusic({ musicUrl }: { musicUrl: string }) {
   const toggle = () => {
     if (!started) { startMusic(); return; }
     if (ytId) {
-      playing ? sendYT("pauseVideo") : (sendYT("playVideo"), sendYT("unMute"));
+      if (playing) {
+        sendYT("pauseVideo");
+      } else {
+        sendYT("playVideo");
+        sendYT("unMute");
+      }
     } else if (audioRef.current) {
       playing ? audioRef.current.pause() : audioRef.current.play().catch(() => {});
     }
@@ -80,7 +85,6 @@ export default function BackgroundMusic({ musicUrl }: { musicUrl: string }) {
         />
       )}
 
-      {/* Barra inferior animada — visible solo hasta que el usuario hace click */}
       {!started && (
         <div
           onClick={startMusic}
@@ -102,14 +106,13 @@ export default function BackgroundMusic({ musicUrl }: { musicUrl: string }) {
             animation: "slideUp 0.5s ease",
           }}
         >
-          <span style={{ fontSize: "1.1rem", animation: "pulse 1.5s infinite" }}>?</span>
+          <span style={{ fontSize: "1.1rem", animation: "pulse 1.5s infinite" }}>{"\u266B"}</span>
           <span style={{ fontSize: "0.9rem", fontWeight: 500, letterSpacing: "0.03em" }}>
             Toca para escuchar la musica de fondo
           </span>
         </div>
       )}
 
-      {/* Boton flotante play/pause — visible solo despues de iniciar */}
       {started && (
         <button
           onClick={toggle}
@@ -133,7 +136,7 @@ export default function BackgroundMusic({ musicUrl }: { musicUrl: string }) {
             backdropFilter: "blur(6px)",
           }}
         >
-          {playing ? "\u23F8" : "\u266B"}
+          {playing ? "| |" : "\u266B"}
         </button>
       )}
 
