@@ -16,6 +16,7 @@ function getYouTubeId(url: string): string | null {
 
 export default function BackgroundMusic({ musicUrl }: { musicUrl: string }) {
   const [playing, setPlaying] = useState(false);
+  const [started, setStarted] = useState(false);
   const audioRef = useRef<HTMLAudioElement>(null);
   const iframeRef = useRef<HTMLIFrameElement>(null);
   const ytId = getYouTubeId(musicUrl);
@@ -27,23 +28,21 @@ export default function BackgroundMusic({ musicUrl }: { musicUrl: string }) {
     );
   };
 
-  // Cuando el iframe carga: el video ya arranco muted (autoplay=1&mute=1).
-  // Intentamos desmutear inmediatamente.
-  const handleIframeLoad = () => {
-    setTimeout(() => {
+  const startMusic = () => {
+    if (ytId) {
+      sendYT("playVideo");
       sendYT("unMute");
-      setPlaying(true);
-    }, 600);
+    } else if (audioRef.current) {
+      audioRef.current.play().catch(() => {});
+    }
+    setStarted(true);
+    setPlaying(true);
   };
 
   const toggle = () => {
+    if (!started) { startMusic(); return; }
     if (ytId) {
-      if (playing) {
-        sendYT("pauseVideo");
-      } else {
-        sendYT("playVideo");
-        sendYT("unMute");
-      }
+      playing ? sendYT("pauseVideo") : (sendYT("playVideo"), sendYT("unMute"));
     } else if (audioRef.current) {
       playing ? audioRef.current.pause() : audioRef.current.play().catch(() => {});
     }
@@ -58,7 +57,6 @@ export default function BackgroundMusic({ musicUrl }: { musicUrl: string }) {
           src={`https://www.youtube.com/embed/${ytId}?autoplay=1&mute=1&loop=1&playlist=${ytId}&controls=0&enablejsapi=1`}
           allow="autoplay; encrypted-media"
           title="Musica de fondo"
-          onLoad={handleIframeLoad}
           style={{
             position: "fixed",
             top: 0,
@@ -78,35 +76,77 @@ export default function BackgroundMusic({ musicUrl }: { musicUrl: string }) {
           loop
           autoPlay
           style={{ display: "none" }}
-          onPlay={() => setPlaying(true)}
+          onPlay={() => { setStarted(true); setPlaying(true); }}
         />
       )}
 
-      <button
-        onClick={toggle}
-        title={playing ? "Pausar musica" : "Reproducir musica"}
-        style={{
-          position: "fixed",
-          bottom: "1.5rem",
-          right: "1.5rem",
-          zIndex: 50,
-          width: "2.75rem",
-          height: "2.75rem",
-          borderRadius: "50%",
-          background: "rgba(0,0,0,0.55)",
-          color: "#fff",
-          border: "2px solid rgba(255,255,255,0.25)",
-          cursor: "pointer",
-          fontSize: "1.15rem",
-          display: "flex",
-          alignItems: "center",
-          justifyContent: "center",
-          backdropFilter: "blur(6px)",
-          transition: "background 0.2s",
-        }}
-      >
-        {playing ? "\u23F8" : "\u266B"}
-      </button>
+      {/* Barra inferior animada — visible solo hasta que el usuario hace click */}
+      {!started && (
+        <div
+          onClick={startMusic}
+          style={{
+            position: "fixed",
+            bottom: 0,
+            left: 0,
+            right: 0,
+            zIndex: 50,
+            background: "rgba(0,0,0,0.75)",
+            color: "#fff",
+            cursor: "pointer",
+            display: "flex",
+            alignItems: "center",
+            justifyContent: "center",
+            gap: "0.6rem",
+            padding: "0.75rem 1rem",
+            backdropFilter: "blur(6px)",
+            animation: "slideUp 0.5s ease",
+          }}
+        >
+          <span style={{ fontSize: "1.1rem", animation: "pulse 1.5s infinite" }}>?</span>
+          <span style={{ fontSize: "0.9rem", fontWeight: 500, letterSpacing: "0.03em" }}>
+            Toca para escuchar la musica de fondo
+          </span>
+        </div>
+      )}
+
+      {/* Boton flotante play/pause — visible solo despues de iniciar */}
+      {started && (
+        <button
+          onClick={toggle}
+          title={playing ? "Pausar musica" : "Reproducir musica"}
+          style={{
+            position: "fixed",
+            bottom: "1.5rem",
+            right: "1.5rem",
+            zIndex: 50,
+            width: "2.75rem",
+            height: "2.75rem",
+            borderRadius: "50%",
+            background: "rgba(0,0,0,0.55)",
+            color: "#fff",
+            border: "2px solid rgba(255,255,255,0.25)",
+            cursor: "pointer",
+            fontSize: "1.15rem",
+            display: "flex",
+            alignItems: "center",
+            justifyContent: "center",
+            backdropFilter: "blur(6px)",
+          }}
+        >
+          {playing ? "\u23F8" : "\u266B"}
+        </button>
+      )}
+
+      <style>{`
+        @keyframes slideUp {
+          from { transform: translateY(100%); opacity: 0; }
+          to   { transform: translateY(0);    opacity: 1; }
+        }
+        @keyframes pulse {
+          0%, 100% { opacity: 1; transform: scale(1); }
+          50%       { opacity: 0.6; transform: scale(1.3); }
+        }
+      `}</style>
     </>
   );
 }
