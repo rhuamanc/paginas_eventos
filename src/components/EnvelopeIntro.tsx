@@ -167,11 +167,6 @@ export default function EnvelopeIntro({
             }}>
               {displayLabel}
             </h1>
-            {hostNames && (
-              <p style={{ fontStyle: "italic", color: "#666", fontSize: "0.95rem", margin: "0 0 0.4rem" }}>
-                {hostNames}
-              </p>
-            )}
             <div style={{ color: acc, fontSize: "0.8rem", letterSpacing: "0.25em", opacity: 0.55, margin: "0.5rem 0" }}>
               {"\u2014"} {"\u00B7"} + {"\u00B7"} {"\u2014"}
             </div>
@@ -207,18 +202,23 @@ export default function EnvelopeIntro({
                   `,
                 }} />
 
-                {/* Iniciales script */}
+                {/* Titulo completo en script */}
                 <div style={{
                   position: "absolute",
                   top: "40%", left: "50%",
                   transform: "translate(-50%, -50%)",
                   fontFamily: scriptFont,
-                  fontSize: "clamp(1.8rem, 9vw, 2.8rem)",
+                  fontSize: "clamp(1.4rem, 6vw, 2.2rem)",
                   color: acc,
                   whiteSpace: "nowrap",
-                  letterSpacing: "0.05em",
+                  letterSpacing: "0.03em",
+                  textAlign: "center",
+                  padding: "0 12px",
+                  maxWidth: "90%",
+                  overflow: "hidden",
+                  textOverflow: "ellipsis",
                 }}>
-                  {initials}
+                  {title || displayLabel}
                 </div>
 
                 {/* Linea de cierre horizontal */}
