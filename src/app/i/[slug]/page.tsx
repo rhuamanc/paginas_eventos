@@ -77,7 +77,15 @@ export default async function PublicInvitationPage({ params }: Props) {
 
   return (
     <main style={{ ...themeVars, background: "var(--th-bg)", color: "var(--th-text)", fontFamily: inv.fontFamily || "Georgia,serif", zoom: inv.fontSize ? Number(inv.fontSize) : undefined, minHeight: "100vh" }}>
-      <EnvelopeIntro musicUrl={inv.musicUrl} accentColor={accent} />
+      <EnvelopeIntro
+        musicUrl={inv.musicUrl}
+        accentColor={accent}
+        eventType={inv.eventType}
+        eventTypeLabel={inv.eventTypeLabel}
+        title={inv.title}
+        hostNames={inv.hostNames}
+        dateTime={inv.dateTime}
+      />
 
       {fullOrder.map((item) => {
         if (!(ALL_SECTION_KEYS as readonly string[]).includes(item)) {
